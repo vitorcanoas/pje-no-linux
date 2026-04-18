@@ -36,7 +36,11 @@ E ainda configura o atalho **Super+Shift+S** para captura de tela — igual ao W
 
 Para abrir:
 - Pressione **Ctrl + Alt + T** ao mesmo tempo
-- Ou procure por **"Terminal"** no menu de aplicativos (como se fosse o Menu Iniciar)
+- Ou clique em **Atividades** (canto superior esquerdo) → digita **"Terminal"** → clica no ícone
+
+![Como encontrar o Terminal no menu de aplicativos](assets/screenshots/00-abrir-terminal.png)
+
+Com o Terminal aberto, você verá uma janela preta. É aqui que você vai digitar o comando:
 
 ![Terminal com o comando de instalação](assets/screenshots/01-terminal.png)
 
@@ -62,6 +66,8 @@ O instalador vai pedir sua senha de usuário (a mesma que você usa para entrar 
 
 **⚠️ Importante:** Quando você digitar a senha, **as letras NÃO aparecem na tela** — nem asteriscos, nada. Parece que não está funcionando, mas está. É uma proteção normal do Linux. Digite a senha e pressione Enter.
 
+![Tela de senha — o cursor fica parado, mas a senha está sendo digitada](assets/screenshots/02b-senha-terminal.png)
+
 ---
 
 ### Passo 4 — Confirmar a instalação
@@ -74,17 +80,9 @@ Vai aparecer um resumo mostrando o que será instalado. Leia e, se estiver de ac
 
 O instalador vai baixar e instalar tudo sozinho. Dependendo da sua internet, leva de 5 a 15 minutos. Você vai ver textos passando na tela — isso é normal, pode deixar rodar.
 
-No final, aparece um relatório assim:
+No final, aparece um relatório como este — tudo com ✓ verde significa que deu certo:
 
-```
-✓ Google Chrome        instalado
-✓ SafeNet SAC          instalado
-✓ SafeSign IC          instalado
-✓ PJeOffice Pro        instalado
-✓ Web Signer           instalado
-✓ Microsoft 365 PWA    configurado
-✓ Atalho Super+Shift+S configurado
-```
+![Relatório final da instalação com todos os componentes instalados](assets/screenshots/05-relatorio-final.png)
 
 ---
 
@@ -92,13 +90,16 @@ No final, aparece um relatório assim:
 
 Depois de instalar, abra o **Chrome** e faça essa configuração **uma única vez**:
 
-1. Clique no ícone do **Web Signer** na barra do Chrome (um escudo azul)
+1. Procure o ícone do **Web Signer** na barra do Chrome (um escudo 🛡️ no canto superior direito) e clique nele
+
+![Onde fica o ícone do Web Signer no Chrome](assets/screenshots/06-websigner-icone.png)
+
 2. Clique em **Configurações** (ícone de engrenagem)
 3. Clique na aba **"Cripto Dispositivos"**
 4. No campo **"Nome do arquivo SO"**, digite: `libeToken.so`
 5. Clique no botão **+**
 
-![Configuração do Web Signer](assets/screenshots/03-websigner.png)
+![Configuração do Web Signer — aba Cripto Dispositivos](assets/screenshots/03-websigner.png)
 
 ---
 

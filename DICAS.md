@@ -74,7 +74,9 @@ sudo apt-get install -y gpaste
 
 Depois de instalar: **Super → pesquise "GPaste"** → ative a extensão.
 
-Com ele ativo, pressione **Ctrl+Alt+H** para ver o histórico de itens copiados.
+Com ele ativo, pressione **Ctrl+Alt+H** para ver o histórico de itens copiados:
+
+![GPaste — histórico da área de transferência](assets/dicas/gpaste-historico.png)
 
 ---
 
@@ -83,8 +85,10 @@ Com ele ativo, pressione **Ctrl+Alt+H** para ver o histórico de itens copiados.
 No Linux, qualquer impressora tem a opção **"Imprimir para arquivo (PDF)"** já instalada. Não precisa de software adicional.
 
 1. **Ctrl+P** em qualquer documento
-2. Em **Impressora**, selecione **"Imprimir para arquivo"**
+2. Em **Impressora**, selecione **"Imprimir para arquivo (PDF)"**
 3. Escolha a pasta de destino e clique em **Imprimir**
+
+![Diálogo de impressão — selecione "Imprimir para arquivo"](assets/dicas/imprimir-pdf.png)
 
 ---
 
@@ -107,6 +111,16 @@ No Linux, arquivos deletados vão para a **Lixeira** (como no Windows).
 - Clique com botão direito no arquivo → **Restaurar**
 
 Se esvaziou a lixeira: use **Ctrl+Z** imediatamente após o delete se ainda estiver na mesma sessão do gerenciador de arquivos.
+
+---
+
+## 💼 Microsoft 365 no Linux
+
+O instalador configura Word, Excel, PowerPoint e Outlook como aplicativos no Linux — sem precisar de Windows, sem emulador, sem complicação. Eles ficam disponíveis no menu de aplicativos como qualquer outro programa:
+
+![Microsoft 365 — Word, Excel, PowerPoint e Outlook como apps no Linux](assets/dicas/microsoft365-apps.png)
+
+Clique no ícone e o aplicativo abre direto no navegador como se fosse um programa nativo.
 
 ---
 
