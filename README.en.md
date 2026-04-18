@@ -26,19 +26,46 @@ It also configures the **Super+Shift+S** shortcut (equivalent to Win+Shift+S on 
 
 ---
 
-### How to install
+### How to install — 3 simple steps
 
-**Step 1** — Open the Terminal (`Ctrl+Alt+T`)
+**Step 1** — Open the Terminal with `Ctrl + Alt + T`
 
-**Step 2** — Type the command below and press Enter:
+**Step 2** — Paste the command and press Enter:
 
 ```bash
 bash instalar.sh
 ```
 
-**Step 3** — Read the summary, confirm with `s` and wait. The script installs everything on its own.
+![Terminal with the install command](assets/screenshots/01-terminal.png)
 
-At the end, a report shows what was installed successfully.
+> When prompted for your password, the characters won't appear on screen — this is normal, it's a system security feature.
+
+**Step 3** — Read the summary, confirm with `s` and wait. An installation report will appear when done.
+
+---
+
+### After installing — configure Web Signer
+
+This is done **once** in Chrome:
+
+1. Open Chrome → click the **Web Signer** icon (blue shield in the toolbar)
+2. Go to **Settings** → **"Crypto Devices"** tab
+3. In the **"SO file name"** field, type: `libeToken.so`
+4. Click **+**
+
+![Web Signer configuration](assets/screenshots/03-websigner.png)
+
+---
+
+### When everything is working
+
+**PJeOffice — token recognized:**
+
+![PJeOffice recognizing the token](assets/screenshots/02-pjeoffice.png)
+
+**eSAJ — certificate available for signing:**
+
+![eSAJ with certificate working](assets/screenshots/04-esaj.png)
 
 ---
 
@@ -46,17 +73,18 @@ At the end, a report shows what was installed successfully.
 
 See [DICAS.md](DICAS.md) (Portuguese) for:
 
-- How to use the digital token on Linux
+- How to use **Super+Shift+S** (screenshot like Win+Shift+S on Windows)
 - Keyboard shortcuts equivalent to Windows
 - Clipboard history (equivalent to Win+V)
 - How to print to PDF
 - How to recover deleted files
+- How to use the digital token on Linux
 
 ---
 
 ### Problems?
 
-The installer writes a full log to `~/pje-install-DATE-TIME.log`. If something goes wrong, send this file to support.
+The installer writes a full log to `~/pje-install-DATE-TIME.log`. Send this file to support if something goes wrong.
 
 ---
 
@@ -71,20 +99,13 @@ checksums.sha256     # SHA256 hashes of binaries (for auditing)
 DICAS.md             # Usage guide for lawyers migrating from Windows
 assets/
   icons/             # 128×128 PNG icons for Microsoft 365 PWAs
-specs/001-rewrite-instalar-sh/
-  spec.md            # Full specification (user stories, requirements)
-  plan.md            # Implementation plan by phases
-  tasks.md           # Task list with completion status
-  research.md        # Technical research (versions, URLs, decisions)
-  data-model.md      # Data model and state flow diagram
-  quickstart.md      # VM test scenarios
+  screenshots/       # Illustrative screenshots for the README
+  dicas/             # Images for the DICAS.md guide
 ```
 
 ### Security
 
 Every downloaded binary is verified with **SHA256** before installation. If the hash doesn't match, the installation aborts. Hashes are stored in the `CONFIG` block at the top of `instalar.sh` and must be updated by the maintainer when bumping versions.
-
-To calculate a binary's hash:
 
 ```bash
 sha256sum filename.deb

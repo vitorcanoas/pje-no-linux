@@ -26,19 +26,46 @@ Além disso, configura o atalho **Super+Shift+S** (equivalente ao Win+Shift+S do
 
 ---
 
-### Como instalar
+### Como instalar — 3 passos simples
 
-**Passo 1** — Abra o Terminal (`Ctrl+Alt+T`)
+**Passo 1** — Abra o Terminal com `Ctrl + Alt + T`
 
-**Passo 2** — Digite o comando abaixo e pressione Enter:
+**Passo 2** — Cole o comando e pressione Enter:
 
 ```bash
 bash instalar.sh
 ```
 
-**Passo 3** — Leia o resumo, confirme com `s` e aguarde. O script instala tudo sozinho.
+![Terminal com o comando de instalação](assets/screenshots/01-terminal.png)
 
-Ao final, aparece um relatório mostrando o que foi instalado com sucesso.
+> Quando pedir senha, as letras não aparecem na tela — isso é normal, é uma proteção do sistema.
+
+**Passo 3** — Leia o resumo, confirme com `s` e aguarde. Ao final, aparece o relatório de instalação.
+
+---
+
+### Após instalar — configurar o Web Signer
+
+Esta configuração é feita **uma única vez** no Chrome:
+
+1. Abra o Chrome → clique no ícone do **Web Signer** (escudo azul na barra)
+2. Vá em **Configurações** → aba **"Cripto Dispositivos"**
+3. No campo **"Nome do arquivo SO"**, digite: `libeToken.so`
+4. Clique em **+**
+
+![Configuração do Web Signer](assets/screenshots/03-websigner.png)
+
+---
+
+### Quando tudo estiver funcionando
+
+**PJeOffice — token reconhecido:**
+
+![PJeOffice reconhecendo o token](assets/screenshots/02-pjeoffice.png)
+
+**eSAJ — certificado disponível para assinatura:**
+
+![eSAJ com certificado funcionando](assets/screenshots/04-esaj.png)
 
 ---
 
@@ -46,17 +73,18 @@ Ao final, aparece um relatório mostrando o que foi instalado com sucesso.
 
 Consulte o arquivo [DICAS.md](DICAS.md) para:
 
-- Como usar o token digital no Linux
+- Como usar o atalho **Super+Shift+S** (captura de tela como no Windows)
 - Atalhos de teclado equivalentes ao Windows
 - Histórico de área de transferência (equivalente ao Win+V)
 - Como imprimir para PDF
 - Como recuperar arquivos deletados
+- Como usar o token digital no Linux
 
 ---
 
 ### Problemas?
 
-O instalador grava um log completo em `~/pje-install-DATA-HORA.log`. Se algo der errado, envie esse arquivo para o suporte.
+O instalador grava um log completo em `~/pje-install-DATA-HORA.log`. Envie esse arquivo para o suporte se algo der errado.
 
 ---
 
@@ -71,20 +99,13 @@ checksums.sha256     # Hashes SHA256 dos binários (para auditoria)
 DICAS.md             # Guia de uso para advogados migrando do Windows
 assets/
   icons/             # Ícones PNG 128×128 para os PWAs do Microsoft 365
-specs/001-rewrite-instalar-sh/
-  spec.md            # Especificação completa (histórias de usuário, requisitos)
-  plan.md            # Plano de implementação por fases
-  tasks.md           # Lista de tarefas com status de conclusão
-  research.md        # Pesquisa técnica (versões, URLs, decisões)
-  data-model.md      # Modelo de dados e fluxo de estados
-  quickstart.md      # Cenários de teste em VM
+  screenshots/       # Capturas de tela ilustrativas do README
+  dicas/             # Imagens do guia DICAS.md
 ```
 
 ### Segurança
 
 Cada binário baixado é verificado com **SHA256** antes de ser instalado. Se o hash não bater, a instalação aborta. Os hashes ficam no bloco `CONFIG` no topo do `instalar.sh` e devem ser atualizados pelo mantenedor ao mudar versões.
-
-Para calcular o hash de um binário:
 
 ```bash
 sha256sum nome-do-arquivo.deb
