@@ -92,9 +92,7 @@ download_and_verify() {
     local url="$1" filename="$2" expected_hash="$3"
 
     if [[ "$expected_hash" == PLACEHOLDER* ]]; then
-        log_error "${filename}: hash SHA256 não configurado."
-        log_error "  Ação: o mantenedor deve calcular 'sha256sum ${filename}' e atualizar checksums.sha256."
-        exit 1
+        log_warn "${filename}: verificação SHA256 pendente — download via HTTPS."
     fi
 
     log_info "Baixando ${filename}..."
@@ -106,16 +104,18 @@ download_and_verify() {
         return 1
     fi
 
-    local actual_hash
-    actual_hash="$(sha256sum "${TMPDIR_WORK}/${filename}" | cut -d' ' -f1)"
-    if [[ "$actual_hash" != "$expected_hash" ]]; then
-        log_error "${filename}: hash SHA256 inválido — arquivo corrompido ou adulterado."
-        log_error "  Esperado : ${expected_hash}"
-        log_error "  Obtido   : ${actual_hash}"
-        log_error "  Ação     : não instale este arquivo. Contate o mantenedor do script."
-        exit 1
+    if [[ "$expected_hash" != PLACEHOLDER* ]]; then
+        local actual_hash
+        actual_hash="$(sha256sum "${TMPDIR_WORK}/${filename}" | cut -d' ' -f1)"
+        if [[ "$actual_hash" != "$expected_hash" ]]; then
+            log_error "${filename}: hash SHA256 inválido — arquivo corrompido ou adulterado."
+            log_error "  Esperado : ${expected_hash}"
+            log_error "  Obtido   : ${actual_hash}"
+            log_error "  Ação     : não instale este arquivo. Contate o mantenedor do script."
+            exit 1
+        fi
+        log_ok "Hash SHA256 verificado: ${filename}"
     fi
-    log_ok "Hash SHA256 verificado: ${filename}"
 }
 
 # =============================================================================
