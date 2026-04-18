@@ -1,90 +1,153 @@
 # PJe on Linux
 
-Installs everything a Brazilian lawyer needs to use PJe (Judicial Electronic Process) on Linux — in a single command.
-
 > README em português: [README.md](README.md)
 
 ---
 
-## For the Lawyer
+## Just installed Linux and can't get PJe to work?
 
-### What is this?
+Relax. This guide was made **by a lawyer, for lawyers** — including those who have never touched Linux in their lives.
 
-If you just migrated from Windows to Linux (Ubuntu, Zorin OS, Linux Mint) and need to use the Brazilian **PJe** court system, this script installs everything automatically:
-
-| What it installs | Purpose |
-|---|---|
-| Google Chrome | Official PJe browser |
-| SafeNet SAC | Digital token (A3) driver |
-| SafeSign IC | A3 certificate signing |
-| PJeOffice Pro | Document signing inside PJe |
-| Web Signer | Browser digital signature extension |
-| Antigravity IDE | Recommended work environment |
-| Microsoft 365 PWA | Word, Excel, PowerPoint and Outlook on Linux |
-
-It also configures the **Super+Shift+S** shortcut (equivalent to Win+Shift+S on Windows) for area screenshots.
+Everything you need installs with **a single command**. No tech knowledge required.
 
 ---
 
-### How to install — 3 simple steps
+## What this script installs for you
 
-**Step 1** — Open the Terminal with `Ctrl + Alt + T`
+| What | What it's for |
+|---|---|
+| **Google Chrome** | Official PJe browser |
+| **SafeNet SAC** | Makes your computer recognize your digital token (the certificate USB stick) |
+| **SafeSign IC** | Signs documents with your A3 certificate |
+| **PJeOffice Pro** | The official court digital signing tool |
+| **Web Signer** | Extension for signing in the browser (eSAJ, TJSP and others) |
+| **Antigravity IDE** | Recommended work environment |
+| **Microsoft 365** | Word, Excel, PowerPoint and Outlook running on Linux |
 
-**Step 2** — Paste the command and press Enter:
+It also configures the **Super+Shift+S** shortcut for area screenshots — same as Win+Shift+S on Windows.
 
-```bash
-bash instalar.sh
-```
+---
+
+## How to install — step by step, from scratch
+
+### Step 1 — Open the Terminal
+
+**The Terminal is Linux's "Command Prompt".** It's a window where you type instructions — it looks scary, but you'll only use one command.
+
+To open it:
+- Press **Ctrl + Alt + T** at the same time
+- Or search for **"Terminal"** in your apps (like the Start Menu)
 
 ![Terminal with the install command](assets/screenshots/01-terminal.png)
 
-> When prompted for your password, the characters won't appear on screen — this is normal, it's a system security feature.
+---
 
-**Step 3** — Read the summary, confirm with `s` and wait. An installation report will appear when done.
+### Step 2 — Type the command
+
+With the Terminal open, **click once inside the black window** and type exactly:
+
+```
+bash instalar.sh
+```
+
+Then press **Enter**.
+
+> **Tip:** You can copy the text above and paste it into the Terminal with **Ctrl + Shift + V** (on Linux it's Shift+V, not just V).
 
 ---
 
-### After installing — configure Web Signer
+### Step 3 — Enter your password
 
-This is done **once** in Chrome:
+The installer will ask for your user password (the same one you use to log into the computer).
 
-1. Open Chrome → click the **Web Signer** icon (blue shield in the toolbar)
-2. Go to **Settings** → **"Crypto Devices"** tab
-3. In the **"SO file name"** field, type: `libeToken.so`
-4. Click **+**
+**⚠️ Important:** When you type your password, **the characters do NOT appear on screen** — no asterisks, nothing. It looks like it's not working, but it is. This is normal Linux security. Just type your password and press Enter.
+
+---
+
+### Step 4 — Confirm the installation
+
+A summary will appear showing what will be installed. Read it and, if you agree, **press the letter `s`** and then **Enter** to confirm.
+
+---
+
+### Step 5 — Wait
+
+The installer will download and install everything on its own. Depending on your internet speed, it takes 5 to 15 minutes. You'll see text scrolling on screen — that's normal, just let it run.
+
+At the end, a report like this appears:
+
+```
+✓ Google Chrome        installed
+✓ SafeNet SAC          installed
+✓ SafeSign IC          installed
+✓ PJeOffice Pro        installed
+✓ Web Signer           installed
+✓ Microsoft 365 PWA    configured
+✓ Super+Shift+S        configured
+```
+
+---
+
+### Step 6 — Configure Web Signer (one time only)
+
+After installing, open **Chrome** and do this configuration **just once**:
+
+1. Click the **Web Signer** icon in Chrome's toolbar (a blue shield)
+2. Click **Settings** (gear icon)
+3. Click the **"Crypto Devices"** tab
+4. In the **"SO file name"** field, type: `libeToken.so`
+5. Click the **+** button
 
 ![Web Signer configuration](assets/screenshots/03-websigner.png)
 
 ---
 
-### When everything is working
+## When everything is working
 
-**PJeOffice — token recognized:**
+**PJeOffice recognizing your token:**
 
 ![PJeOffice recognizing the token](assets/screenshots/02-pjeoffice.png)
 
-**eSAJ — certificate available for signing:**
+**eSAJ with your certificate available:**
 
 ![eSAJ with certificate working](assets/screenshots/04-esaj.png)
 
 ---
 
-### Tips and Help
+## Something went wrong?
 
-See [DICAS.md](DICAS.md) (Portuguese) for:
+Don't panic. The installer saves a full log of everything that happened to:
 
-- How to use **Super+Shift+S** (screenshot like Win+Shift+S on Windows)
-- Keyboard shortcuts equivalent to Windows
-- Clipboard history (equivalent to Win+V)
-- How to print to PDF
-- How to recover deleted files
-- How to use the digital token on Linux
+```
+~/pje-install-DATE-TIME.log
+```
+
+Send that file to support and they'll have everything they need to help you.
 
 ---
 
-### Problems?
+## Day-to-day tips on Linux
 
-The installer writes a full log to `~/pje-install-DATE-TIME.log`. Send this file to support if something goes wrong.
+See [DICAS.md](DICAS.md) (Portuguese) to learn:
+
+- **Super+Shift+S** — area screenshot (same as Win+Shift+S)
+- Keyboard shortcuts equivalent to Windows
+- Clipboard history (same as Win+V)
+- How to print to PDF
+- How to recover deleted files
+- How to use the digital token
+
+---
+
+## About the author
+
+I'm **Vitor**, a lawyer for over 10 years, passionate about technology and currently learning to code — because apparently law alone isn't complicated enough.
+
+I switched to Linux and spent hours trying to get PJe to work. After a lot of suffering (and a few words that don't belong in a README), I put everything into a script so no other lawyer has to go through the same thing.
+
+After all, **who hasn't struggled with technology on a daily basis?** 😄
+
+If I figured it out, you can too.
 
 ---
 

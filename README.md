@@ -1,90 +1,153 @@
 # PJe no Linux
 
-Instala em um único comando tudo que um advogado precisa para usar o PJe no Linux.
-
 > README em inglês: [README.en.md](README.en.md)
 
 ---
 
-## Para o Advogado
+## Você acabou de instalar o Linux e não consegue usar o PJe?
 
-### O que é isso?
+Relaxa. Esse guia foi feito **por um advogado, para advogados** — inclusive para quem nunca tocou em Linux na vida.
 
-Se você acabou de migrar do Windows para Linux (Ubuntu, Zorin OS, Linux Mint) e precisa usar o **PJe** (Processo Judicial Eletrônico), este script instala tudo automaticamente:
-
-| O que instala | Para que serve |
-|---|---|
-| Google Chrome | Navegador oficial do PJe |
-| SafeNet SAC | Driver do token digital (A3) |
-| SafeSign IC | Assinatura com certificado A3 |
-| PJeOffice Pro | Assinatura de documentos no PJe |
-| Web Signer | Extensão de assinatura digital no navegador |
-| Antigravity IDE | Ambiente de trabalho recomendado |
-| Microsoft 365 PWA | Word, Excel, PowerPoint e Outlook no Linux |
-
-Além disso, configura o atalho **Super+Shift+S** (equivalente ao Win+Shift+S do Windows) para captura de tela.
+Aqui você instala tudo que precisa com **um único comando**. Sem precisar entender de tecnologia.
 
 ---
 
-### Como instalar — 3 passos simples
+## O que esse script instala para você
 
-**Passo 1** — Abra o Terminal com `Ctrl + Alt + T`
+| O que | Para que serve |
+|---|---|
+| **Google Chrome** | Navegador oficial do PJe |
+| **SafeNet SAC** | Para o computador reconhecer seu token (aquele pendrive do certificado) |
+| **SafeSign IC** | Para assinar documentos com seu certificado A3 |
+| **PJeOffice Pro** | O assinador digital oficial dos tribunais |
+| **Web Signer** | Extensão para assinar no navegador (eSAJ, TJSP e outros) |
+| **Antigravity IDE** | Ambiente de trabalho recomendado |
+| **Microsoft 365** | Word, Excel, PowerPoint e Outlook funcionando no Linux |
 
-**Passo 2** — Cole o comando e pressione Enter:
+E ainda configura o atalho **Super+Shift+S** para captura de tela — igual ao Win+Shift+S que você usava no Windows.
 
-```bash
-bash instalar.sh
-```
+---
+
+## Como instalar — do zero, passo a passo
+
+### Passo 1 — Abrir o Terminal
+
+**O Terminal é o "Prompt de Comando" do Linux.** É uma janela onde você digita instruções para o computador — parece assustador, mas você vai usar só um comando.
+
+Para abrir:
+- Pressione **Ctrl + Alt + T** ao mesmo tempo
+- Ou procure por **"Terminal"** no menu de aplicativos (como se fosse o Menu Iniciar)
 
 ![Terminal com o comando de instalação](assets/screenshots/01-terminal.png)
 
-> Quando pedir senha, as letras não aparecem na tela — isso é normal, é uma proteção do sistema.
+---
 
-**Passo 3** — Leia o resumo, confirme com `s` e aguarde. Ao final, aparece o relatório de instalação.
+### Passo 2 — Digitar o comando
+
+Com o Terminal aberto, **clique uma vez dentro da janela preta** e digite exatamente isso:
+
+```
+bash instalar.sh
+```
+
+Depois pressione **Enter**.
+
+> **Dica:** Você pode copiar o texto acima e colar no Terminal com **Ctrl + Shift + V** (no Linux é Shift+V, não só V).
 
 ---
 
-### Após instalar — configurar o Web Signer
+### Passo 3 — Digitar sua senha
 
-Esta configuração é feita **uma única vez** no Chrome:
+O instalador vai pedir sua senha de usuário (a mesma que você usa para entrar no computador).
 
-1. Abra o Chrome → clique no ícone do **Web Signer** (escudo azul na barra)
-2. Vá em **Configurações** → aba **"Cripto Dispositivos"**
-3. No campo **"Nome do arquivo SO"**, digite: `libeToken.so`
-4. Clique em **+**
+**⚠️ Importante:** Quando você digitar a senha, **as letras NÃO aparecem na tela** — nem asteriscos, nada. Parece que não está funcionando, mas está. É uma proteção normal do Linux. Digite a senha e pressione Enter.
+
+---
+
+### Passo 4 — Confirmar a instalação
+
+Vai aparecer um resumo mostrando o que será instalado. Leia e, se estiver de acordo, **pressione a letra `s`** e depois **Enter** para confirmar.
+
+---
+
+### Passo 5 — Aguardar
+
+O instalador vai baixar e instalar tudo sozinho. Dependendo da sua internet, leva de 5 a 15 minutos. Você vai ver textos passando na tela — isso é normal, pode deixar rodar.
+
+No final, aparece um relatório assim:
+
+```
+✓ Google Chrome        instalado
+✓ SafeNet SAC          instalado
+✓ SafeSign IC          instalado
+✓ PJeOffice Pro        instalado
+✓ Web Signer           instalado
+✓ Microsoft 365 PWA    configurado
+✓ Atalho Super+Shift+S configurado
+```
+
+---
+
+### Passo 6 — Configurar o Web Signer (uma vez só)
+
+Depois de instalar, abra o **Chrome** e faça essa configuração **uma única vez**:
+
+1. Clique no ícone do **Web Signer** na barra do Chrome (um escudo azul)
+2. Clique em **Configurações** (ícone de engrenagem)
+3. Clique na aba **"Cripto Dispositivos"**
+4. No campo **"Nome do arquivo SO"**, digite: `libeToken.so`
+5. Clique no botão **+**
 
 ![Configuração do Web Signer](assets/screenshots/03-websigner.png)
 
 ---
 
-### Quando tudo estiver funcionando
+## Quando tudo estiver funcionando
 
-**PJeOffice — token reconhecido:**
+**PJeOffice reconhecendo seu token:**
 
 ![PJeOffice reconhecendo o token](assets/screenshots/02-pjeoffice.png)
 
-**eSAJ — certificado disponível para assinatura:**
+**eSAJ com seu certificado disponível:**
 
 ![eSAJ com certificado funcionando](assets/screenshots/04-esaj.png)
 
 ---
 
-### Dúvidas e dicas
+## Algo deu errado?
 
-Consulte o arquivo [DICAS.md](DICAS.md) para:
+Não entre em pânico. O instalador grava um log completo com tudo que aconteceu em:
 
-- Como usar o atalho **Super+Shift+S** (captura de tela como no Windows)
-- Atalhos de teclado equivalentes ao Windows
-- Histórico de área de transferência (equivalente ao Win+V)
-- Como imprimir para PDF
-- Como recuperar arquivos deletados
-- Como usar o token digital no Linux
+```
+~/pje-install-DATA-HORA.log
+```
+
+Envie esse arquivo para o suporte e ele terá tudo que precisa para te ajudar.
 
 ---
 
-### Problemas?
+## Dicas para o dia a dia no Linux
 
-O instalador grava um log completo em `~/pje-install-DATA-HORA.log`. Envie esse arquivo para o suporte se algo der errado.
+Consulte o [DICAS.md](DICAS.md) para aprender:
+
+- **Super+Shift+S** — captura de área da tela (igual ao Win+Shift+S)
+- Atalhos do teclado equivalentes ao Windows
+- Histórico da área de transferência (igual ao Win+V)
+- Como imprimir para PDF
+- Como recuperar arquivos deletados
+- Como usar o token digital
+
+---
+
+## Sobre o autor
+
+Sou **Vitor**, advogado há mais de 10 anos, apaixonado por tecnologia e, atualmente, aprendendo a programar — porque aparentemente advocacia sozinha não é complicado o suficiente.
+
+Migrei para o Linux e passei horas tentando fazer o PJe funcionar. Depois de muito sofrimento (e algumas palavras que não cabem num README), coloquei tudo isso em um script para que nenhum outro advogado precise passar pelo mesmo.
+
+Afinal, **quem nunca apanhou da tecnologia no dia a dia?** 😄
+
+Se eu consegui, você também consegue.
 
 ---
 
