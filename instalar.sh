@@ -2,7 +2,7 @@
 
 # =============================================================================
 # PJe no Linux — Instalador para Advogados
-# Instala: Google Chrome + PJeOffice Pro + Drivers de Token + Web Signer
+# Instala: Google Chrome + PJeOffice Pro + Driver do Token + Web Signer
 # Compatível com: Zorin OS 17/18, Ubuntu 22.04/24.04, Linux Mint 21/22
 # Repositório: github.com/vitorcanoas/pje-no-linux
 # =============================================================================
@@ -30,9 +30,8 @@ echo ""
 echo -e "Este script vai instalar e configurar automaticamente:"
 echo ""
 echo -e "  ${GREEN}✓${NC} Google Chrome (navegador oficial para o PJe e eSAJ)"
-echo -e "  ${GREEN}✓${NC} Driver SafeNet (tokens eToken 5100/5110 — Certisign, OAB, Serasa)"
-echo -e "  ${GREEN}✓${NC} Driver GD SafeSign (tokens StarSign e cartões GD/Safesign)"
-echo -e "  ${GREEN}✓${NC} Driver OpenSC (Gemalto, cartões genéricos e fallback)"
+echo -e "  ${GREEN}✓${NC} Driver SafeNet (tokens eToken 5100/5110)"
+echo -e "  ${GREEN}✓${NC} Driver GD SafeSign (tokens StarSign e cartões GD)"
 echo -e "  ${GREEN}✓${NC} PJeOffice Pro (assinador dos tribunais)"
 echo -e "  ${GREEN}✓${NC} Web Signer (para assinar no eSAJ/TJSP)"
 echo ""
@@ -53,23 +52,11 @@ sudo apt-get install -y -qq \
     opensc-pkcs11 \
     libccid \
     libpcsclite1 \
-    libpcsclite-dev \
-    pcsc-tools \
     wget \
     curl \
     unzip \
     unrar 2>/dev/null || \
-sudo apt-get install -y -qq \
-    pcscd \
-    opensc \
-    opensc-pkcs11 \
-    libccid \
-    libpcsclite1 \
-    pcsc-tools \
-    wget \
-    curl \
-    unzip \
-    unar 2>/dev/null || true
+sudo apt-get install -y -qq unar 2>/dev/null || true
 ok "Dependências instaladas"
 
 # =============================================================================
@@ -104,48 +91,27 @@ else
 fi
 
 # =============================================================================
-# 4. DRIVER GD SAFESIGN (tokens StarSign, Cartão Azul/Prata GD, Safesign)
+# 4. DRIVER GD SAFESIGN (tokens StarSign, Cartão Azul/Prata GD — Certisign)
 # =============================================================================
 if [ -f /usr/lib/libaetpkss.so ] || [ -f /usr/lib/libaetpkss.so.3 ]; then
     ok "Driver GD SafeSign já instalado"
 else
     info "Baixando driver GD SafeSign (tokens StarSign e cartões GD)..."
-    SAFESIGN_DOWNLOADED=false
-
-    # Detectar versão do Ubuntu para escolher o .deb correto
-    UBUNTU_VERSION=$(lsb_release -rs 2>/dev/null || echo "22.04")
-    UBUNTU_MAJOR=$(echo "$UBUNTU_VERSION" | cut -d. -f1)
-
-    if [ "$UBUNTU_MAJOR" -ge 24 ]; then
-        SAFESIGN_FILE="SafeSign_IC_Standard_Linux_3.7.0.0_AET.000_ub2004_x86_64.rar"
-    else
-        SAFESIGN_FILE="SafeSign_IC_Standard_Linux_3.7.0.0_AET.000_ub2004_x86_64.rar"
-    fi
-
     wget -q --show-progress \
-        "https://safesign.gdamericadosul.com.br/content/${SAFESIGN_FILE}" \
-        -O /tmp/safesign.rar && SAFESIGN_DOWNLOADED=true || true
-
-    if [ "$SAFESIGN_DOWNLOADED" = true ]; then
+        "https://safesign.gdamericadosul.com.br/content/SafeSign_IC_Standard_Linux_3.7.0.0_AET.000_ub2004_x86_64.rar" \
+        -O /tmp/safesign.rar && {
         mkdir -p /tmp/safesign_extract
         if command -v unrar &>/dev/null; then
             unrar x -o+ /tmp/safesign.rar /tmp/safesign_extract/ 2>/dev/null || true
-        elif command -v unar &>/dev/null; then
+        else
             unar -o /tmp/safesign_extract/ /tmp/safesign.rar 2>/dev/null || true
         fi
-        # Instalar o .deb encontrado
         SAFESIGN_DEB=$(find /tmp/safesign_extract -name "*.deb" | head -1)
         if [ -n "$SAFESIGN_DEB" ]; then
-            info "Instalando GD SafeSign..."
             sudo dpkg -i "$SAFESIGN_DEB" 2>/dev/null || sudo apt-get install -f -y -qq
             ok "Driver GD SafeSign instalado"
-        else
-            warn "Não foi possível extrair o instalador GD SafeSign — token StarSign pode não funcionar"
         fi
-    else
-        warn "Não foi possível baixar o driver GD SafeSign — token StarSign pode não funcionar"
-        warn "Se usar token StarSign, baixe manualmente em: https://safesign.gdamericadosul.com.br/download"
-    fi
+    } || warn "Não foi possível baixar o driver GD SafeSign — se usar StarSign, rode: bash instalar-extras.sh"
 fi
 
 # =============================================================================
@@ -179,69 +145,26 @@ else
 fi
 
 # =============================================================================
-# 7. CONFIGURAR DRIVERS DE CERTIFICADO NO PJEOFFICE
+# 7. CONFIGURAR CERTIFICADO NO PJEOFFICE
 # =============================================================================
-info "Configurando drivers de certificado no PJeOffice..."
+info "Configurando o certificado no PJeOffice..."
 mkdir -p "$HOME/.pjeoffice-pro"
-
-# Construir lista de drivers dinamicamente conforme os instalados
-DRIVERS_JSON='   "drivers": ['
-
-DRIVER_SAFENET=false
-DRIVER_GD=false
-DRIVER_OPENSC=false
-
-if [ -f /usr/lib/libeToken.so ]; then
-    DRIVER_SAFENET=true
-    DRIVERS_JSON+='
+cat > "$HOME/.pjeoffice-pro/pjeoffice-pro.json" << 'EOF'
+{
+   "drivers": [
      {
        "name": "Token SafeNet (eToken 5100/5110 — Certisign, OAB, Serasa, Valid)",
        "library": "/usr/lib/libeToken.so"
-     },'
-fi
-
-if [ -f /usr/lib/libaetpkss.so ] || [ -f /usr/lib/libaetpkss.so.3 ]; then
-    DRIVER_GD=true
-    GD_LIB="/usr/lib/libaetpkss.so"
-    [ -f /usr/lib/libaetpkss.so.3 ] && GD_LIB="/usr/lib/libaetpkss.so.3"
-    DRIVERS_JSON+="
+     },
      {
-       \"name\": \"Token GD SafeSign (StarSign, Cartão Azul/Prata GD — Certisign)\",
-       \"library\": \"$GD_LIB\"
-     },"
-fi
-
-if [ -f /usr/lib/x86_64-linux-gnu/opensc-pkcs11.so ]; then
-    DRIVER_OPENSC=true
-    DRIVERS_JSON+='
-     {
-       "name": "Token Genérico / OpenSC (Gemalto, cartões sem driver específico)",
-       "library": "/usr/lib/x86_64-linux-gnu/opensc-pkcs11.so"
-     },'
-fi
-
-# Remover última vírgula e fechar JSON
-DRIVERS_JSON="${DRIVERS_JSON%,}"
-DRIVERS_JSON+='
-   ]'
-
-# Determinar driver padrão
-if [ "$DRIVER_SAFENET" = true ]; then
-    CURRENT_DRIVER="Token SafeNet (eToken 5100/5110 — Certisign, OAB, Serasa, Valid)"
-elif [ "$DRIVER_GD" = true ]; then
-    CURRENT_DRIVER="Token GD SafeSign (StarSign, Cartão Azul/Prata GD — Certisign)"
-else
-    CURRENT_DRIVER="Token Genérico / OpenSC (Gemalto, cartões sem driver específico)"
-fi
-
-cat > "$HOME/.pjeoffice-pro/pjeoffice-pro.json" << EOF
-{
-$DRIVERS_JSON,
-   "currentDriver": "$CURRENT_DRIVER"
+       "name": "Token GD SafeSign (StarSign, Cartão Azul/Prata GD — Certisign)",
+       "library": "/usr/lib/libaetpkss.so"
+     }
+   ],
+   "currentDriver": "Token SafeNet (eToken 5100/5110 — Certisign, OAB, Serasa, Valid)"
 }
 EOF
-
-ok "Drivers de certificado configurados no PJeOffice"
+ok "Certificado configurado no PJeOffice"
 
 # =============================================================================
 # 8. WEB SIGNER (para eSAJ/TJSP e outros tribunais SAJ)
@@ -270,11 +193,9 @@ ok "Web Signer configurado para o Chrome"
 info "Criando ícones..."
 ICON_PATH="$HOME/pjeoffice-pro.png"
 
-# Baixar ícone
 wget -q "https://raw.githubusercontent.com/vitorcanoas/pje-no-linux/main/assets/pjeoffice-pro.png" \
     -O "$ICON_PATH" 2>/dev/null || true
 
-# Criar .desktop
 mkdir -p "$HOME/.local/share/applications"
 cat > "$HOME/.local/share/applications/PJeOfficePro.desktop" << EOF
 [Desktop Entry]
@@ -287,7 +208,6 @@ Categories=Office;Java;
 StartupWMClass=br-jus-cnj-pje-office-imp-PjeOfficeApp
 EOF
 
-# Copiar para área de trabalho
 for DESKTOP in "$HOME/Desktop" "$HOME/Área de trabalho"; do
     if [ -d "$DESKTOP" ]; then
         cp "$HOME/.local/share/applications/PJeOfficePro.desktop" "$DESKTOP/" 2>/dev/null || true
@@ -299,7 +219,7 @@ update-desktop-database "$HOME/.local/share/applications/" 2>/dev/null || true
 ok "Ícone criado na área de trabalho"
 
 # =============================================================================
-# 10. AUTOSTART (abrir PJeOffice automaticamente ao ligar o computador)
+# 10. AUTOSTART
 # =============================================================================
 info "Configurando abertura automática no login..."
 mkdir -p "$HOME/.config/autostart"
@@ -320,20 +240,10 @@ ok "PJeOffice configurado para abrir no login"
 # INSTALAÇÃO CONCLUÍDA
 # =============================================================================
 
-# Testar tokens
-SAFENET_OK=false
-GD_OK=false
-
-if [ -f /usr/lib/libeToken.so ] && pkcs11-tool --module /usr/lib/libeToken.so --list-slots 2>/dev/null | grep -q "token label"; then
-    SAFENET_OK=true
-fi
-
-if [ -f /usr/lib/libaetpkss.so ] || [ -f /usr/lib/libaetpkss.so.3 ]; then
-    GD_LIB="/usr/lib/libaetpkss.so"
-    [ -f /usr/lib/libaetpkss.so.3 ] && GD_LIB="/usr/lib/libaetpkss.so.3"
-    if pkcs11-tool --module "$GD_LIB" --list-slots 2>/dev/null | grep -q "token label"; then
-        GD_OK=true
-    fi
+# Testar token
+TOKEN_INFO=""
+if pkcs11-tool --module /usr/lib/libeToken.so --list-slots 2>/dev/null | grep -q "token label"; then
+    TOKEN_INFO=$(pkcs11-tool --module /usr/lib/libeToken.so --list-slots 2>/dev/null | grep "token label" | cut -d: -f2 | xargs)
 fi
 
 clear
@@ -345,16 +255,12 @@ echo ""
 echo -e "  ${GREEN}✓${NC} Google Chrome instalado"
 echo -e "  ${GREEN}✓${NC} Driver SafeNet instalado (tokens eToken 5100/5110)"
 echo -e "  ${GREEN}✓${NC} Driver GD SafeSign instalado (tokens StarSign e cartões GD)"
-echo -e "  ${GREEN}✓${NC} Driver OpenSC instalado (tokens genéricos e Gemalto)"
 echo -e "  ${GREEN}✓${NC} PJeOffice Pro instalado"
 echo -e "  ${GREEN}✓${NC} Web Signer instalado"
 echo ""
 
-if [ "$SAFENET_OK" = true ]; then
-    echo -e "  ${GREEN}✓${NC} Token SafeNet detectado e funcionando!"
-    echo ""
-elif [ "$GD_OK" = true ]; then
-    echo -e "  ${GREEN}✓${NC} Token GD detectado e funcionando!"
+if [ -n "$TOKEN_INFO" ]; then
+    echo -e "  ${GREEN}✓${NC} Token detectado: ${BOLD}$TOKEN_INFO${NC}"
     echo ""
 fi
 
@@ -370,15 +276,11 @@ echo -e "  1. Abra o Google Chrome"
 echo -e "  2. Instale a extensão Web Signer:"
 echo -e "     ${BLUE}https://chromewebstore.google.com/detail/web-signer/bbafmabaelnnkondpfpjmdklbmfnbmol${NC}"
 echo -e "  3. Clique no ícone do Web Signer → Configurações → Cripto Dispositivos"
-echo -e "  4. No campo 'Nome do arquivo SO' adicione o driver do seu token:"
-
-if [ "$DRIVER_SAFENET" = true ]; then
-echo -e "     - Token eToken 5100/5110: ${BOLD}libeToken.so${NC}"
-fi
-if [ "$DRIVER_GD" = true ]; then
-echo -e "     - Token StarSign / Cartão GD: ${BOLD}libaetpkss.so${NC}"
-fi
+echo -e "  4. No campo 'Nome do arquivo SO' digite: ${BOLD}libeToken.so${NC} (SafeNet) ou ${BOLD}libaetpkss.so${NC} (StarSign/GD)"
 echo -e "  5. Clique em ${BOLD}+${NC} para adicionar"
+echo ""
+echo -e "  Usa Gemalto, cartão OT/IDE ou outro token menos comum?"
+echo -e "  ${BLUE}bash instalar-extras.sh${NC}"
 echo ""
 echo -e "  Dúvidas? Acesse: ${BLUE}github.com/vitorcanoas/pje-no-linux${NC}"
 echo ""
