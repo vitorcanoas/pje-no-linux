@@ -204,3 +204,27 @@ echo ""
 echo -e "  Para usar: clique em ${BOLD}PJeOffice Pro${NC} na área de trabalho"
 echo -e "  Dúvidas: github.com/vitorcanoas/pjeofficelinuxparaadvogados"
 echo ""
+
+# =============================================================================
+# 9. WEBSIGNER (eSAJ / TJSP e outros tribunais SAJ)
+# =============================================================================
+info "Instalando Web Signer (eSAJ/TJSP)..."
+
+WEBSIGNER_URL="https://websigner.softplan.com.br/Downloads/2.9.5/webpki-chrome-64-deb"
+wget -q --show-progress "$WEBSIGNER_URL" -O /tmp/websigner.deb
+
+sudo dpkg -i /tmp/websigner.deb || sudo apt-get install -f -y -qq
+
+# Configurar Native Messaging para Chrome .deb
+sudo mkdir -p /etc/opt/chrome/native-messaging-hosts/
+sudo cp /opt/softplan-websigner/manifest.json \
+    /etc/opt/chrome/native-messaging-hosts/br.com.softplan.webpki.json
+
+ok "Web Signer instalado"
+echo ""
+warn "Para o eSAJ funcionar, após instalar:"
+echo "  1. Instale a extensão Web Signer no Chrome:"
+echo "     https://chromewebstore.google.com/detail/web-signer/bbafmabaelnnkondpfpjmdklbmfnbmol"
+echo "  2. Abra o Web Signer → Configurações → Cripto Dispositivos"
+echo "  3. No campo 'Nome do arquivo SO' digite: libeToken.so"
+echo "  4. Clique em + para adicionar"
