@@ -36,12 +36,12 @@ readonly ANTIGRAVITY_URL="https://antigravity.google/download/linux"
 # Chrome não tem hash aqui: verificação GPG é feita pelo apt (mais seguro)
 # Para os demais: execute ./atualizar-hashes.sh para calcular e atualizar
 readonly SAC_HASH="PLACEHOLDER_calcular_sha256sum"
-readonly SAFESIGN_HASH="PLACEHOLDER_calcular_sha256sum"
-readonly PJEOFFICE_HASH="PLACEHOLDER_calcular_sha256sum"
-readonly WEBSIGNER_HASH="PLACEHOLDER_calcular_sha256sum"
+readonly SAFESIGN_HASH="PLACEHOLDER_calcular_sha256sum"  # requer download manual em aeteurope.com
+readonly PJEOFFICE_HASH="6087391759c7cba11fb5ef815fe8be91713b46a8607c12eb664a9d9a6882c4c7"
+readonly WEBSIGNER_HASH="5da8fd36f1371f52bbaebede75fade1928f09cff2dd605b8da5663c6da505379"
 # Antigravity: snap preferido (sandbox); .deb como fallback
 readonly ANTIGRAVITY_SNAP="antigravity"
-readonly ANTIGRAVITY_HASH="PLACEHOLDER_calcular_sha256sum"
+readonly ANTIGRAVITY_HASH="ba16cb265fb823c8b738680e1497dfeb7990d4951566beb828d5b3547564f28b"
 
 # Log — captura toda saída (inclusive tela de consentimento)
 LOG_FILE="$HOME/pje-install-$(date +%Y%m%d-%H%M%S).log"
