@@ -4,11 +4,22 @@
 
 ---
 
+## Instalação — copie, cole e pressione Enter
+
+```bash
+git clone https://github.com/vitorcanoas/pje-no-linux.git && cd pje-no-linux && bash instalar.sh
+```
+
+> Abra o Terminal (`Ctrl + Alt + T`), cole o comando acima com `Ctrl + Shift + V` e pressione Enter.
+> Não sabe o que é Terminal? Leia o passo a passo com imagens abaixo. 👇
+
+---
+
 ## Você acabou de instalar o Linux e não consegue usar o PJe?
 
 Relaxa. Esse guia foi feito **por um advogado, para advogados** — inclusive para quem nunca tocou em Linux na vida.
 
-Aqui você instala tudo que precisa com **um único comando**. Sem precisar entender de tecnologia.
+Um único comando instala tudo. Sem precisar entender de tecnologia.
 
 ---
 

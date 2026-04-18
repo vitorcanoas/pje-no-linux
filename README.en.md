@@ -4,11 +4,22 @@
 
 ---
 
+## Install — copy, paste and press Enter
+
+```bash
+git clone https://github.com/vitorcanoas/pje-no-linux.git && cd pje-no-linux && bash instalar.sh
+```
+
+> Open the Terminal (`Ctrl + Alt + T`), paste with `Ctrl + Shift + V` and press Enter.
+> Don't know what a Terminal is? Read the step-by-step guide with images below. 👇
+
+---
+
 ## Just installed Linux and can't get PJe to work?
 
 Relax. This guide was made **by a lawyer, for lawyers** — including those who have never touched Linux in their lives.
 
-Everything you need installs with **a single command**. No tech knowledge required.
+One single command installs everything. No tech knowledge required.
 
 ---
 
