@@ -26,9 +26,9 @@ Com SpecKit, cada feature começa com um documento de especificação que a IA l
 
 ## Setup — ambiente pronto para codar
 
-Uma das vantagens deste projeto: quando você clona, **o ambiente de IA já vem configurado**. Todas as skills do SpecKit estão dentro de `.claude/commands/` e o Claude Code as carrega automaticamente ao abrir o projeto.
+Aqui tem uma coisa que a maioria dos projetos open source não faz: **quando você clona esse repo, o ambiente de IA já vem montado**. As skills do SpecKit estão em `.claude/commands/` e o Claude Code as carrega automaticamente.
 
-Não precisa configurar nada de skill. Clona, abre o Claude, e os `/speckit.*` já estão disponíveis. Como um escritório que já tem o processo organizado antes de você chegar.
+É como chegar num escritório novo e o processo já estar com post-it em cada folha, índice organizado e os prazos marcados. Só sentar e trabalhar.
 
 ### 1. Instale o Claude Code
 
@@ -36,7 +36,7 @@ Não precisa configurar nada de skill. Clona, abre o Claude, e os `/speckit.*` j
 npm install -g @anthropic/claude-code
 ```
 
-IA direto no terminal. Lê os arquivos, edita, commita, explica. Funciona como um programador sênior que atende 24/7 e não cobra hora extra — nem 13º.
+IA direto no terminal. Lê os arquivos, edita, testa, commita e explica o que fez. Funciona como um programador sênior que atende 24/7, não cobra hora extra, não tem ego e nunca vai jantar quando você mais precisa dele.
 
 ### 2. Clone o repositório
 
@@ -51,28 +51,41 @@ cd pje-no-linux
 claude
 ```
 
-Pronto. O Claude já lê o projeto inteiro e as skills SpecKit ficam disponíveis como comandos `/`.
+Pronto. Sem configurar skill, sem instalar plugin, sem tutorial de YouTube de 47 minutos. O Claude lê o projeto inteiro e os `/speckit.*` já aparecem disponíveis.
 
 ---
 
-## Skills incluídas no repositório
+## Skills SpecKit — inclusas, sem precisar pedir
 
-O diretório `.claude/commands/` já está no repo. Ao abrir com Claude Code, estes comandos ficam disponíveis automaticamente:
+O diretório `.claude/commands/` vive dentro do repo. Cada skill é um arquivo `.md` com instruções que o Claude interpreta como comando. Não tem mágica — é só organização boa.
 
-| Skill | Tipo | O que faz |
-|-------|------|-----------|
-| `/speckit.specify` | Principal | Gera `spec.md` — especificação completa da feature |
-| `/speckit.clarify` | Principal | Detecta ambiguidades, faz até 5 perguntas, resolve antes de avançar |
-| `/speckit.plan` | Principal | Cria `plan.md` — plano técnico por fases com decisões explícitas |
-| `/speckit.implement` | Principal | Implementa o código guiado por spec + plano |
-| `/speckit.tasks` | Principal | Gera `tasks.md` — tarefas rastreáveis com status `[X]` |
-| `/speckit.analyze` | Principal | Audita spec vs plano vs código — encontra o que divergiu |
-| `/speckit.checklist` | Auxiliar | Checklist de verificação e testes antes do PR |
-| `/speckit.constitution` | Auxiliar | Exibe ou atualiza os princípios inegociáveis do projeto |
-| `/speckit.agent` | Auxiliar | Recomenda stack técnica com base no contexto do projeto |
-| `/speckit.taskstoissues` | Auxiliar | Converte `tasks.md` em issues do GitHub automaticamente |
+Ao abrir o projeto com Claude Code, estes 10 comandos ficam disponíveis na hora:
 
-> **Para MCPs** (servidores de contexto externo como GitHub, Jira, Slack): configure no seu `~/.claude/settings.json` global. MCPs são pessoais — credenciais suas, não do projeto.
+| Skill | Para que serve |
+|-------|----------------|
+| `/speckit.specify` | Gera a especificação completa da feature — histórias de usuário, requisitos, critérios de aceite. O "por quê" antes do "como". |
+| `/speckit.clarify` | Detecta o que está ambíguo na spec e faz até 5 perguntas antes de avançar. Previne aquele retrabalho clássico de "ah, eu achei que você queria dizer outra coisa". |
+| `/speckit.plan` | Cria o plano técnico de implementação por fases, com decisões explícitas e alternativas descartadas. Nada de "surpresa na implementação". |
+| `/speckit.implement` | Implementa o código guiado pela spec + plano. A IA não improvisa — ela segue o que foi definido. |
+| `/speckit.tasks` | Gera a lista de tarefas rastreáveis com status `[X]`. Você sabe exatamente o que foi feito e o que falta. |
+| `/speckit.analyze` | Audita spec vs plano vs código implementado. Encontra inconsistências, decisões que sumiram e requisitos que ninguém implementou. É o `git blame` do processo. |
+| `/speckit.checklist` | Checklist de verificação e testes antes de abrir o PR. Porque revisar antes de protocolar é básico — mas todo mundo esquece. |
+| `/speckit.constitution` | Exibe ou atualiza os princípios inegociáveis do projeto. Como uma constituição mesmo: não se negocia, não se ignora. |
+| `/speckit.agent` | Recomenda stack técnica com base no contexto do projeto. Útil quando você quer adicionar algo novo e não sabe por onde começar. |
+| `/speckit.taskstoissues` | Converte o `tasks.md` em issues do GitHub automaticamente. Burocracia que a IA resolve por você — finalmente algo justo. |
+
+### E os MCPs?
+
+**MCP** (Model Context Protocol) são servidores que conectam o Claude a sistemas externos — GitHub, Jira, Slack, banco de dados, o que quiser. Pense num MCP como um assistente que acessa o processo eletrônico por você.
+
+MCPs são configuração **pessoal**, ficam no seu `~/.claude/settings.json` global e não entram no repositório — porque carregam credenciais suas. Cada contribuidor configura os próprios.
+
+Exemplos úteis para esse projeto:
+- **MCP do GitHub** — o Claude abre, comenta e fecha issues direto do terminal
+- **MCP do Google Drive** — acessa documentação ou planilhas de versões sem sair do Claude
+- **MCP do Slack** — notifica o canal quando um PR é aberto (se você tiver um time)
+
+Documentação oficial: [modelcontextprotocol.io](https://modelcontextprotocol.io)
 
 ---
 
