@@ -24,7 +24,11 @@ Com SpecKit, cada feature começa com um documento de especificação que a IA l
 
 ---
 
-## Setup — o que você precisa
+## Setup — ambiente pronto para codar
+
+Uma das vantagens deste projeto: quando você clona, **o ambiente de IA já vem configurado**. Todas as skills do SpecKit estão dentro de `.claude/commands/` e o Claude Code as carrega automaticamente ao abrir o projeto.
+
+Não precisa configurar nada de skill. Clona, abre o Claude, e os `/speckit.*` já estão disponíveis. Como um escritório que já tem o processo organizado antes de você chegar.
 
 ### 1. Instale o Claude Code
 
@@ -32,7 +36,7 @@ Com SpecKit, cada feature começa com um documento de especificação que a IA l
 npm install -g @anthropic/claude-code
 ```
 
-Abre o terminal, roda esse comando, e você tem o Claude direto no shell. Nada de interface gráfica, nada de copiar e colar — ele lê os arquivos, edita, commita e explica. Funciona como um programador sênior que atende 24/7 e não cobra hora extra.
+IA direto no terminal. Lê os arquivos, edita, commita, explica. Funciona como um programador sênior que atende 24/7 e não cobra hora extra — nem 13º.
 
 ### 2. Clone o repositório
 
@@ -47,7 +51,28 @@ cd pje-no-linux
 claude
 ```
 
-Pronto. Agora você tem IA com contexto completo do projeto no terminal.
+Pronto. O Claude já lê o projeto inteiro e as skills SpecKit ficam disponíveis como comandos `/`.
+
+---
+
+## Skills incluídas no repositório
+
+O diretório `.claude/commands/` já está no repo. Ao abrir com Claude Code, estes comandos ficam disponíveis automaticamente:
+
+| Skill | Tipo | O que faz |
+|-------|------|-----------|
+| `/speckit.specify` | Principal | Gera `spec.md` — especificação completa da feature |
+| `/speckit.clarify` | Principal | Detecta ambiguidades, faz até 5 perguntas, resolve antes de avançar |
+| `/speckit.plan` | Principal | Cria `plan.md` — plano técnico por fases com decisões explícitas |
+| `/speckit.implement` | Principal | Implementa o código guiado por spec + plano |
+| `/speckit.tasks` | Principal | Gera `tasks.md` — tarefas rastreáveis com status `[X]` |
+| `/speckit.analyze` | Principal | Audita spec vs plano vs código — encontra o que divergiu |
+| `/speckit.checklist` | Auxiliar | Checklist de verificação e testes antes do PR |
+| `/speckit.constitution` | Auxiliar | Exibe ou atualiza os princípios inegociáveis do projeto |
+| `/speckit.agent` | Auxiliar | Recomenda stack técnica com base no contexto do projeto |
+| `/speckit.taskstoissues` | Auxiliar | Converte `tasks.md` em issues do GitHub automaticamente |
+
+> **Para MCPs** (servidores de contexto externo como GitHub, Jira, Slack): configure no seu `~/.claude/settings.json` global. MCPs são pessoais — credenciais suas, não do projeto.
 
 ---
 
