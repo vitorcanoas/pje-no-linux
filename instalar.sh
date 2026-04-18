@@ -13,7 +13,7 @@ set -euo pipefail
 
 # === CONFIGURAÇÃO — edite aqui para atualizar versões ===
 readonly SAC_VERSION="10.8.1050"
-readonly SAFESIGN_VERSION="4.2.1.0"
+readonly SAFESIGN_VERSION="4.6.0.0"
 readonly PJEOFFICE_VERSION="v2.5.16u"
 readonly WEBSIGNER_VERSION="2.12.1"
 
@@ -26,8 +26,8 @@ readonly SCRIPT_DIR
 readonly CHROME_APT_KEY_URL="https://dl.google.com/linux/linux_signing_key.pub"
 readonly CHROME_APT_KEYRING="/usr/share/keyrings/google-chrome.gpg"
 readonly CHROME_APT_SOURCE="deb [arch=amd64 signed-by=${CHROME_APT_KEYRING}] https://dl.google.com/linux/chrome/deb/ stable main"
-readonly SAC_URL="https://download.globalsign.com/safenet/SafeNet-SAC-Ubuntu-22-04-LTS.zip"
-readonly SAFESIGN_URL="https://aeteurope.com/download/SafeSign_IC_Standard_Linux_${SAFESIGN_VERSION}_AET.000_ub2204_x86_64.deb"
+readonly SAC_URL="https://www.globalsign.com/en/safenet-drivers/USB/10.8/GlobalSign-SAC-Ubuntu-2204.zip"
+readonly SAFESIGN_URL="https://safesign.gdamericadosul.com.br/content/SafeSign%20IC%20Standard%20Linux%20ub2204%20${SAFESIGN_VERSION}-AET.000.zip"
 readonly PJEOFFICE_URL="https://pje-office.pje.jus.br/pro/pjeoffice-pro-${PJEOFFICE_VERSION}-linux_x64.zip"
 readonly WEBSIGNER_URL="https://websigner.softplan.com.br/Downloads/${WEBSIGNER_VERSION}/webpki-chrome-64-deb"
 readonly ANTIGRAVITY_URL="https://antigravity.google/download/linux"
@@ -35,8 +35,8 @@ readonly ANTIGRAVITY_URL="https://antigravity.google/download/linux"
 # Hashes SHA256 — pré-calculados offline e commitados no repositório
 # Chrome não tem hash aqui: verificação GPG é feita pelo apt (mais seguro)
 # Para os demais: execute ./atualizar-hashes.sh para calcular e atualizar
-readonly SAC_HASH="PLACEHOLDER_calcular_sha256sum"
-readonly SAFESIGN_HASH="PLACEHOLDER_calcular_sha256sum"  # requer download manual em aeteurope.com
+readonly SAC_HASH="0583c3e5478a5251803af16f0bbd7d2a4e48d20188deb9dc6178456ec8d20316"
+readonly SAFESIGN_HASH="69307586b99f13bfd67bece4629ac84c920f6f317b5c6b91e2afa79977508f22"
 readonly PJEOFFICE_HASH="6087391759c7cba11fb5ef815fe8be91713b46a8607c12eb664a9d9a6882c4c7"
 readonly WEBSIGNER_HASH="5da8fd36f1371f52bbaebede75fade1928f09cff2dd605b8da5663c6da505379"
 # Antigravity: snap preferido (sandbox); .deb como fallback
@@ -334,9 +334,24 @@ install_sac() {
 
 install_safesign() {
     log_info "=== SafeSign IC Standard ${SAFESIGN_VERSION} ==="
-    local filename="SafeSign_IC_Standard_Linux_${SAFESIGN_VERSION}_AET.000_ub2204_x86_64.deb"
-    download_and_verify "$SAFESIGN_URL" "$filename" "$SAFESIGN_HASH"
-    sudo dpkg -i "${TMPDIR_WORK}/${filename}" || sudo apt-get install -f -y -q
+    local zipfile="safesign-ic-standard-linux-ub2204-${SAFESIGN_VERSION}-aet.000.zip"
+    download_and_verify "$SAFESIGN_URL" "$zipfile" "$SAFESIGN_HASH"
+
+    local safesign_dir="${TMPDIR_WORK}/safesign"
+    mkdir -p "$safesign_dir"
+    unzip -q "${TMPDIR_WORK}/${zipfile}" -d "$safesign_dir"
+
+    local deb_file
+    deb_file="$(find "$safesign_dir" -name "*.deb" | head -1)"
+    if [[ -z "$deb_file" ]]; then
+        log_error "SafeSign: arquivo .deb não encontrado dentro do zip."
+        log_error "  URL usada: ${SAFESIGN_URL}"
+        log_error "  Ação: verifique o conteúdo do zip ou baixe manualmente em aeteurope.com."
+        INSTALL_STATUS["safesign"]="fail"
+        return
+    fi
+
+    sudo dpkg -i "$deb_file" || sudo apt-get install -f -y -q
     verify_installed "safesign" "safesign"
 }
 

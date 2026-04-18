@@ -207,7 +207,7 @@ Remove todos os pacotes, arquivos de configuração, atalhos e reverte o atalho 
 | Componente | Versão | Distribuição |
 |---|---|---|
 | SafeNet SAC | 10.8.1050 | Ubuntu 22.04 |
-| SafeSign IC | 4.2.1.0 | Ubuntu 22.04 |
+| SafeSign IC | 4.6.0.0 | Ubuntu 22.04 |
 | PJeOffice Pro | v2.5.16u | Linux x64 |
 | Web Signer | 2.12.1 | Chrome (64-bit .deb) |
 

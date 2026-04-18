@@ -14,12 +14,12 @@ readonly NC='\033[0m'
 
 # Versões — manter em sincronia com instalar.sh
 readonly SAC_VERSION="10.8.1050"
-readonly SAFESIGN_VERSION="4.2.1.0"
+readonly SAFESIGN_VERSION="4.6.0.0"
 readonly PJEOFFICE_VERSION="v2.5.16u"
 readonly WEBSIGNER_VERSION="2.12.1"
 
-readonly SAC_URL="https://download.globalsign.com/safenet/SafeNet-SAC-Ubuntu-22-04-LTS.zip"
-readonly SAFESIGN_URL="https://aeteurope.com/download/SafeSign_IC_Standard_Linux_${SAFESIGN_VERSION}_AET.000_ub2204_x86_64.deb"
+readonly SAC_URL="https://www.globalsign.com/en/safenet-drivers/USB/10.8/GlobalSign-SAC-Ubuntu-2204.zip"
+readonly SAFESIGN_URL="https://safesign.gdamericadosul.com.br/content/SafeSign%20IC%20Standard%20Linux%20ub2204%20${SAFESIGN_VERSION}-AET.000.zip"
 readonly PJEOFFICE_URL="https://pje-office.pje.jus.br/pro/pjeoffice-pro-${PJEOFFICE_VERSION}-linux_x64.zip"
 readonly WEBSIGNER_URL="https://websigner.softplan.com.br/Downloads/${WEBSIGNER_VERSION}/webpki-chrome-64-deb"
 readonly ANTIGRAVITY_URL="https://antigravity.google/download/linux"
@@ -53,7 +53,7 @@ printf "%-22s %s\n" "Componente" "SHA256"
 printf "%-22s %s\n" "----------" "------"
 
 SAC_HASH="$(calcular      "SAC ${SAC_VERSION}"           "$SAC_URL"          "GlobalSign-SAC-Ubuntu-2204.zip")"
-SAFESIGN_HASH="$(calcular "SafeSign ${SAFESIGN_VERSION}" "$SAFESIGN_URL"     "safesign.deb")"
+SAFESIGN_HASH="$(calcular "SafeSign ${SAFESIGN_VERSION}" "$SAFESIGN_URL"     "safesign.zip")"
 PJEOFFICE_HASH="$(calcular "PJeOffice ${PJEOFFICE_VERSION}" "$PJEOFFICE_URL" "pjeoffice.zip")"
 WEBSIGNER_HASH="$(calcular "WebSigner ${WEBSIGNER_VERSION}" "$WEBSIGNER_URL" "websigner.deb")"
 ANTIGRAVITY_HASH="$(calcular "Antigravity"               "$ANTIGRAVITY_URL"  "antigravity.deb")"
