@@ -15,11 +15,19 @@ git clone https://github.com/vitorcanoas/pje-no-linux.git && cd pje-no-linux && 
 
 ---
 
-## Você acabou de instalar o Linux e não consegue usar o PJe?
+## Você é advogado, migrou pro Linux e agora o PJe não funciona?
 
-Relaxa. Esse guia foi feito **por um advogado, para advogados** — inclusive para quem nunca tocou em Linux na vida.
+Bem-vindo ao clube. Sofremos muito e o café já não resolve mais.
 
-Um único comando instala tudo. Sem precisar entender de tecnologia.
+Passei horas nisso. Horas. Com palavrão, com raiva, com aquela cara de quem perdeu prazo — mas era só o driver do token que não funcionava. Depois de muito sofrimento transformado em código, ficou pronto:
+
+**Um único comando instala tudo.**
+
+E o melhor: leva de 5 a 15 minutos pra rodar. Tempo perfeito pra colocar uma balada anos 2000 no Spotify e fingir que você está sendo produtivo enquanto o Linux trabalha por você.
+
+Ou um rock pauleira se preferir. O script não julga. O Eiffel 65 e o Metallica têm o mesmo peso aqui. 🤘🎵
+
+Feito por um advogado, para advogados — inclusive para quem nunca tocou em Linux na vida. Sem precisar entender de tecnologia.
 
 ---
 
