@@ -22,7 +22,10 @@ SCRIPT_DIR="$(CDPATH="" cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly SCRIPT_DIR
 
 # URLs — construídas a partir das variáveis de versão acima
-readonly CHROME_URL="https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
+# Chrome: instalado via repositório apt oficial (GPG verificado pelo apt automaticamente)
+readonly CHROME_APT_KEY_URL="https://dl.google.com/linux/linux_signing_key.pub"
+readonly CHROME_APT_KEYRING="/usr/share/keyrings/google-chrome.gpg"
+readonly CHROME_APT_SOURCE="deb [arch=amd64 signed-by=${CHROME_APT_KEYRING}] https://dl.google.com/linux/chrome/deb/ stable main"
 readonly SAC_URL="https://download.globalsign.com/safenet/SafeNet-SAC-Ubuntu-22-04-LTS.zip"
 readonly SAFESIGN_URL="https://aeteurope.com/download/SafeSign_IC_Standard_Linux_${SAFESIGN_VERSION}_AET.000_ub2204_x86_64.deb"
 readonly PJEOFFICE_URL="https://pje-office.pje.jus.br/pro/pjeoffice-pro-${PJEOFFICE_VERSION}-linux_x64.zip"
@@ -30,13 +33,14 @@ readonly WEBSIGNER_URL="https://websigner.softplan.com.br/Downloads/${WEBSIGNER_
 readonly ANTIGRAVITY_URL="https://antigravity.google/download/linux"
 
 # Hashes SHA256 — pré-calculados offline e commitados no repositório
-# Para calcular: sha256sum <arquivo-baixado>
-# ATENÇÃO: substitua os PLACEHOLDERs pelos hashes reais antes de usar em produção
-readonly CHROME_HASH="PLACEHOLDER_calcular_sha256sum"
+# Chrome não tem hash aqui: verificação GPG é feita pelo apt (mais seguro)
+# Para os demais: execute ./atualizar-hashes.sh para calcular e atualizar
 readonly SAC_HASH="PLACEHOLDER_calcular_sha256sum"
 readonly SAFESIGN_HASH="PLACEHOLDER_calcular_sha256sum"
 readonly PJEOFFICE_HASH="PLACEHOLDER_calcular_sha256sum"
 readonly WEBSIGNER_HASH="PLACEHOLDER_calcular_sha256sum"
+# Antigravity: snap preferido (sandbox); .deb como fallback
+readonly ANTIGRAVITY_SNAP="antigravity"
 readonly ANTIGRAVITY_HASH="PLACEHOLDER_calcular_sha256sum"
 
 # Log — captura toda saída (inclusive tela de consentimento)
@@ -116,6 +120,29 @@ download_and_verify() {
         fi
         log_ok "Hash SHA256 verificado: ${filename}"
     fi
+}
+
+# Tenta instalar via snap (sandbox nativo); fallback para .deb com SHA256
+# Uso: install_snap_or_deb <id> <snap-name> <deb-url> <deb-file> <deb-hash> <dpkg-pkg>
+install_snap_or_deb() {
+    local id="$1" snap_name="$2" deb_url="$3" deb_file="$4" deb_hash="$5" dpkg_pkg="$6"
+
+    if command -v snap &>/dev/null && snap info "$snap_name" &>/dev/null 2>&1; then
+        log_info "${snap_name}: versão snap encontrada — instalando com sandbox..."
+        if sudo snap install "$snap_name" --classic 2>/dev/null \
+           || sudo snap install "$snap_name" 2>/dev/null; then
+            INSTALL_STATUS["$id"]="ok"
+            log_ok "${snap_name}: instalado via snap (sandbox ativo)."
+            return 0
+        fi
+        log_warn "${snap_name}: snap falhou — usando .deb como fallback..."
+    else
+        log_info "${snap_name}: não disponível no snap — instalando via .deb..."
+    fi
+
+    download_and_verify "$deb_url" "$deb_file" "$deb_hash"
+    sudo dpkg -i "${TMPDIR_WORK}/${deb_file}" || sudo apt-get install -f -y -q
+    verify_installed "$id" "$dpkg_pkg"
 }
 
 # =============================================================================
@@ -260,13 +287,23 @@ show_summary_and_confirm() {
 # =============================================================================
 
 install_chrome() {
-    log_info "=== Google Chrome ==="
-    download_and_verify \
-        "$CHROME_URL" \
-        "google-chrome-stable_current_amd64.deb" \
-        "$CHROME_HASH"
-    sudo dpkg -i "${TMPDIR_WORK}/google-chrome-stable_current_amd64.deb" \
-        || sudo apt-get install -f -y -q
+    log_info "=== Google Chrome (via apt + GPG) ==="
+    # Chrome NÃO usa snap: snap Chrome é incompatível com Native Messaging Host (Web Signer)
+    # Instalação via repositório apt oficial — GPG verificado automaticamente pelo apt
+
+    if [[ ! -f "$CHROME_APT_KEYRING" ]]; then
+        log_info "Importando chave GPG do Google..."
+        wget -qO- "$CHROME_APT_KEY_URL" | sudo gpg --dearmor -o "$CHROME_APT_KEYRING"
+        log_ok "Chave GPG do Google importada."
+    fi
+
+    if [[ ! -f "/etc/apt/sources.list.d/google-chrome.list" ]]; then
+        echo "$CHROME_APT_SOURCE" \
+            | sudo tee "/etc/apt/sources.list.d/google-chrome.list" > /dev/null
+    fi
+
+    sudo apt-get update -qq
+    sudo apt-get install -y -q google-chrome-stable
     verify_installed "chrome" "google-chrome-stable"
 }
 
@@ -339,13 +376,14 @@ install_websigner() {
 }
 
 install_antigravity() {
-    log_info "=== Antigravity IDE ==="
-    download_and_verify \
+    log_info "=== Antigravity IDE (snap preferido) ==="
+    install_snap_or_deb \
+        "antigravity" \
+        "$ANTIGRAVITY_SNAP" \
         "$ANTIGRAVITY_URL" \
         "antigravity-linux.deb" \
-        "$ANTIGRAVITY_HASH"
-    sudo dpkg -i "${TMPDIR_WORK}/antigravity-linux.deb" || sudo apt-get install -f -y -q
-    verify_installed "antigravity" "antigravity"
+        "$ANTIGRAVITY_HASH" \
+        "antigravity"
 }
 
 install_office_pwa() {
