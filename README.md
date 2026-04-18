@@ -29,41 +29,50 @@ No Linux, o "Terminal" é equivalente ao Prompt de Comando do Windows. Para abri
 - Pressione as teclas **Ctrl + Alt + T** ao mesmo tempo
 - Ou procure por "Terminal" no menu de aplicativos
 
-Uma janela preta com texto vai abrir. Não se assuste — é normal!
+### Passo 2 — Colar e rodar o comando
 
-### Passo 2 — Copiar e colar o comando
-
-Clique na área abaixo para copiar, depois cole no terminal com **Ctrl + Shift + V** e pressione **Enter**:
+Copie o comando abaixo, cole no terminal com **Ctrl + Shift + V** e pressione **Enter**:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/vitorcanoas/pje-no-linux/main/instalar.sh | bash
 ```
 
-O script vai pedir sua **senha de administrador** (a mesma senha que você usa para ligar o computador). Quando digitar a senha, as letras não aparecem na tela — isso é normal, é uma proteção do sistema.
+![Terminal com o comando de instalação](assets/screenshots/01-terminal-comando.png)
 
-### Passo 3 — Aguardar a instalação
+> Quando pedir senha, as letras não aparecem na tela — isso é normal, é uma proteção do sistema.
 
-O processo leva alguns minutos dependendo da sua internet. Quando terminar, vai aparecer uma mensagem de sucesso com as instruções finais.
+### Passo 3 — Aguardar
+
+O processo leva alguns minutos. Quando terminar, aparecerá uma mensagem de sucesso.
 
 ---
 
 ## Após a instalação — configurar o Web Signer para o eSAJ
 
-O Web Signer precisa de uma configuração rápida no navegador. Faça isso uma única vez:
+Esta configuração é feita **uma única vez** no navegador:
 
 1. Abra o **Google Chrome** (instalado pelo script)
-2. Acesse o **eSAJ** do seu tribunal
-3. Clique em **"Certificado digital"**
-4. Clique no ícone do **Web Signer** na barra do Chrome (ícone de escudo azul)
-5. Vá em **Configurações** (ícone de engrenagem ⚙️)
-6. Clique na aba **"Cripto Dispositivos"**
-7. No campo **"Nome do arquivo SO"**, digite exatamente: `libeToken.so`
-8. Clique no botão **+**
-9. Volte para o eSAJ e clique em **Recarregar**
+2. Instale a extensão **Web Signer** na Chrome Web Store:
+   **[Clique aqui para instalar a extensão Web Signer](https://chromewebstore.google.com/detail/web-signer/bbafmabaelnnkondpfpjmdklbmfnbmol)**
+3. Clique no ícone do **Web Signer** na barra do Chrome (escudo azul)
+4. Vá em **Configurações** (ícone de engrenagem ⚙️)
+5. Clique na aba **"Cripto Dispositivos"**
+6. No campo **"Nome do arquivo SO"**, digite exatamente: `libeToken.so`
+7. Clique no botão **+**
 
-Pronto! Seu certificado vai aparecer na lista e você poderá entrar com o PIN.
+![Configuração do Web Signer — Cripto Dispositivos](assets/screenshots/03-websigner-config.png)
 
-> ⚠️ **Atenção:** Use sempre o **Google Chrome instalado pelo script** — não o Chrome que veio pré-instalado no sistema (que pode ser uma versão diferente incompatível com o Web Signer).
+---
+
+## Como fica quando tudo está funcionando
+
+**PJeOffice — token reconhecido:**
+
+![PJeOffice reconhecendo o token](assets/screenshots/02-pjeoffice-token.png)
+
+**eSAJ — certificado disponível:**
+
+![eSAJ com certificado funcionando](assets/screenshots/04-esaj-certificado.png)
 
 ---
 
@@ -75,7 +84,7 @@ Pronto! Seu certificado vai aparecer na lista e você poderá entrar com o PIN.
 | Pendrive azul com logo G&D ou Certisign | GD Starsign | ✅ Sim |
 | Cartão com chip + leitor USB | Smart card | ✅ Sim |
 
-**Não sabe qual é o seu?** Olhe o token físico — o fabricante está impresso nele. Se vier da Certisign em formato de pendrive preto/cinza, é SafeNet eToken.
+> **Não sabe qual é o seu?** Olhe o token físico — o fabricante está impresso nele.
 
 ---
 
@@ -92,25 +101,25 @@ Pronto! Seu certificado vai aparecer na lista e você poderá entrar com o PIN.
 ## Dúvidas frequentes
 
 **"O PJeOffice abriu mas a lista de certificados está vazia"**
-→ Verifique se o token está bem encaixado na porta USB. Tente em outra porta USB. Desconecte e reconecte.
+→ Verifique se o token está bem encaixado na porta USB. Tente em outra porta. Desconecte e reconecte.
 
 **"O certificado aparece em vermelho"**
-→ Certificado vencido. Selecione o que está em preto — é o válido. Os vermelhos são versões antigas expiradas.
+→ Certificado vencido. Selecione o que está em preto — é o válido.
 
 **"O site do tribunal diz que o PJeOffice não está instalado"**
-→ Abra o PJeOffice primeiro (ícone na área de trabalho), espere ele carregar, depois acesse o site.
+→ Abra o PJeOffice primeiro (ícone na área de trabalho), espere carregar, depois acesse o site.
 
 **"Esqueci o PIN do token"**
-→ Entre em contato com o emissor do seu certificado (Certisign, OAB, Serasa, etc.). Eles podem desbloquear.
+→ Entre em contato com o emissor do seu certificado (Certisign, OAB, Serasa, etc.).
 
 **"Instalei mas não funcionou"**
-→ Abra uma [dúvida aqui](https://github.com/vitorcanoas/pje-no-linux/issues) informando seu sistema operacional e o modelo do token. Tentaremos ajudar.
+→ Abra uma [dúvida aqui](https://github.com/vitorcanoas/pje-no-linux/issues) informando seu sistema operacional e o modelo do token.
 
 ---
 
 ## Precisa reinstalar? (ex: formatou o computador)
 
-Basta rodar o mesmo comando novamente:
+Basta rodar o mesmo comando novamente — ele detecta o que já está instalado:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/vitorcanoas/pje-no-linux/main/instalar.sh | bash
@@ -120,7 +129,7 @@ curl -fsSL https://raw.githubusercontent.com/vitorcanoas/pje-no-linux/main/insta
 
 ## Quer contribuir?
 
-Se este guia te ajudou e você quer ajudar outros colegas advogados:
+Se este guia te ajudou, ajude outros colegas:
 - Compartilhe com sua OAB seccional
 - Abra um [Pull Request](https://github.com/vitorcanoas/pje-no-linux/pulls) com melhorias
 - Reporte problemas em [Issues](https://github.com/vitorcanoas/pje-no-linux/issues)
