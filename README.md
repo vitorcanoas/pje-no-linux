@@ -1,211 +1,130 @@
-# PJeOffice Pro + Certificado Digital no Linux 🐧⚖️
+# PJe no Linux — Para Advogados ⚖️
 
-> Guia completo para advogados que estão migrando para o Linux — ou que simplesmente querem usar o PJeOffice sem dor de cabeça.
+**Você é advogado, acabou de instalar o Linux e não consegue usar o PJeOffice nem o eSAJ?**
+Este repositório resolve tudo isso com **um único comando** — sem precisar entender de tecnologia.
 
-Feito por um advogado, para advogados. Depois de horas de tentativa e erro, este repositório reúne tudo que você precisa para funcionar no **Zorin OS**, **Ubuntu** e **Linux Mint**.
+Feito por um advogado, para advogados. Depois de horas de luta, reunimos aqui tudo que você precisa.
 
 ---
 
-## Instalação em um único comando
+## O que isso instala?
 
-Abra o terminal (`Ctrl + Alt + T`) e cole:
+Rodando **um único comando** no terminal, você terá:
+
+| O que | Para que serve |
+|---|---|
+| **Google Chrome** | Navegador necessário para o eSAJ e outros sistemas judiciais |
+| **PJeOffice Pro** | Assinador digital dos tribunais (CNJ) |
+| **Driver do token** | Para o computador reconhecer seu certificado A3 (pendrive do certificado) |
+| **Web Signer** | Plugin para assinar documentos no eSAJ/TJSP e outros tribunais SAJ |
+
+---
+
+## Como instalar — 3 passos simples
+
+### Passo 1 — Abrir o Terminal
+
+No Linux, o "Terminal" é equivalente ao Prompt de Comando do Windows. Para abrir:
+
+- Pressione as teclas **Ctrl + Alt + T** ao mesmo tempo
+- Ou procure por "Terminal" no menu de aplicativos
+
+Uma janela preta com texto vai abrir. Não se assuste — é normal!
+
+### Passo 2 — Copiar e colar o comando
+
+Clique na área abaixo para copiar, depois cole no terminal com **Ctrl + Shift + V** e pressione **Enter**:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/vitorcanoas/pjeofficelinuxparaadvogados/main/instalar.sh | bash
+curl -fsSL https://raw.githubusercontent.com/vitorcanoas/pje-no-linux/main/instalar.sh | bash
 ```
 
-O script instala e configura tudo automaticamente:
-- ✅ PJeOffice Pro (versão mais recente do CNJ)
-- ✅ Driver SafeNet para tokens **eToken 5100/5110**
-- ✅ Driver OpenSC para tokens **GD Starsign** e outros
-- ✅ Ícone bonito na área de trabalho
-- ✅ PJeOffice abrindo automaticamente no login
+O script vai pedir sua **senha de administrador** (a mesma senha que você usa para ligar o computador). Quando digitar a senha, as letras não aparecem na tela — isso é normal, é uma proteção do sistema.
+
+### Passo 3 — Aguardar a instalação
+
+O processo leva alguns minutos dependendo da sua internet. Quando terminar, vai aparecer uma mensagem de sucesso com as instruções finais.
 
 ---
 
-## Compatibilidade
+## Após a instalação — configurar o Web Signer para o eSAJ
 
-| Sistema Operacional | Versão | Status |
+O Web Signer precisa de uma configuração rápida no navegador. Faça isso uma única vez:
+
+1. Abra o **Google Chrome** (instalado pelo script)
+2. Acesse o **eSAJ** do seu tribunal
+3. Clique em **"Certificado digital"**
+4. Clique no ícone do **Web Signer** na barra do Chrome (ícone de escudo azul)
+5. Vá em **Configurações** (ícone de engrenagem ⚙️)
+6. Clique na aba **"Cripto Dispositivos"**
+7. No campo **"Nome do arquivo SO"**, digite exatamente: `libeToken.so`
+8. Clique no botão **+**
+9. Volte para o eSAJ e clique em **Recarregar**
+
+Pronto! Seu certificado vai aparecer na lista e você poderá entrar com o PIN.
+
+> ⚠️ **Atenção:** Use sempre o **Google Chrome instalado pelo script** — não o Chrome que veio pré-instalado no sistema (que pode ser uma versão diferente incompatível com o Web Signer).
+
+---
+
+## Meu token funciona com este script?
+
+| Como é o token | Nome | Funciona? |
 |---|---|---|
-| Zorin OS | 17, 18 | ✅ Testado |
-| Ubuntu | 22.04, 24.04 | ✅ Compatível |
-| Linux Mint | 21, 22 | ✅ Compatível |
+| Pendrive preto ou cinza com logo SafeNet/Certisign | eToken 5100 ou 5110 | ✅ Sim |
+| Pendrive azul com logo G&D ou Certisign | GD Starsign | ✅ Sim |
+| Cartão com chip + leitor USB | Smart card | ✅ Sim |
+
+**Não sabe qual é o seu?** Olhe o token físico — o fabricante está impresso nele. Se vier da Certisign em formato de pendrive preto/cinza, é SafeNet eToken.
 
 ---
 
-## Tokens suportados
+## Sistemas operacionais compatíveis
 
-| Token | Fabricante | Emissores comuns | Driver |
-|---|---|---|---|
-| eToken 5100 | SafeNet/Thales | Certisign, Serasa, Valid, Soluti | SafeNet Authentication Client (SAC) |
-| eToken 5110 | SafeNet/Thales | Certisign, Serasa, Valid, Soluti | SafeNet Authentication Client (SAC) |
-| GD Starsign | G&D | Certisign | OpenSC (já incluído no Linux) |
-| Pronova | Athena | Vários emissores | OpenSC (já incluído no Linux) |
-
-> **Não sabe qual token você tem?** Olhe o token físico — o fabricante geralmente está impresso nele. Se for cinza/preto da Certisign com formato de pendrive, é SafeNet eToken.
+| Sistema | Versão | Testado |
+|---|---|---|
+| Zorin OS | 17 e 18 | ✅ |
+| Ubuntu | 22.04 e 24.04 | ✅ |
+| Linux Mint | 21 e 22 | ✅ |
 
 ---
 
-## Instalação manual (passo a passo)
+## Dúvidas frequentes
 
-Se preferir fazer manualmente, ou se o script automático falhar:
+**"O PJeOffice abriu mas a lista de certificados está vazia"**
+→ Verifique se o token está bem encaixado na porta USB. Tente em outra porta USB. Desconecte e reconecte.
 
-### 1. Instalar dependências
+**"O certificado aparece em vermelho"**
+→ Certificado vencido. Selecione o que está em preto — é o válido. Os vermelhos são versões antigas expiradas.
 
-```bash
-sudo apt-get update
-sudo apt-get install -y pcscd opensc opensc-pkcs11 libccid libpcsclite1 wget unzip
-```
+**"O site do tribunal diz que o PJeOffice não está instalado"**
+→ Abra o PJeOffice primeiro (ícone na área de trabalho), espere ele carregar, depois acesse o site.
 
-### 2. Instalar o driver SafeNet (para tokens eToken)
+**"Esqueci o PIN do token"**
+→ Entre em contato com o emissor do seu certificado (Certisign, OAB, Serasa, etc.). Eles podem desbloquear.
 
-```bash
-wget https://www.globalsign.com/en/safenet-drivers/USB/10.8/GlobalSign-SAC-Ubuntu-2204.zip -O /tmp/sac.zip
-unzip /tmp/sac.zip -d /tmp/sac/
-sudo dpkg -i /tmp/sac/Ubuntu-2204/safenetauthenticationclient_10.8.1050_amd64.deb
-sudo systemctl restart pcscd
-```
+**"Instalei mas não funcionou"**
+→ Abra uma [dúvida aqui](https://github.com/vitorcanoas/pje-no-linux/issues) informando seu sistema operacional e o modelo do token. Tentaremos ajudar.
 
-Após instalar, teste se seu token é reconhecido:
+---
 
-```bash
-pkcs11-tool --module /usr/lib/libeToken.so --list-slots
-```
+## Precisa reinstalar? (ex: formatou o computador)
 
-Você deve ver o nome do seu certificado listado (ex: `CERTIFICAÇÃO OAB`).
-
-### 3. Baixar e instalar o PJeOffice Pro
+Basta rodar o mesmo comando novamente:
 
 ```bash
-wget https://pje-office.pje.jus.br/pro/pjeoffice-pro-linux_x64.zip -O /tmp/pje.zip
-mkdir -p ~/pjeoffice-pro
-unzip /tmp/pje.zip -d ~/pjeoffice-pro
-chmod +x ~/pjeoffice-pro/pjeoffice-pro.sh
-chmod +x ~/pjeoffice-pro/jre/bin/java
-```
-
-### 4. Configurar o driver de certificado no PJeOffice
-
-Crie o arquivo de configuração:
-
-```bash
-mkdir -p ~/.pjeoffice-pro
-cat > ~/.pjeoffice-pro/pjeoffice-pro.json << 'EOF'
-{
-   "drivers": [
-     {
-       "name": "Token SafeNet (eToken 5100/5110 — Certisign, Serasa, Valid)",
-       "library": "/usr/lib/libeToken.so"
-     },
-     {
-       "name": "Token GD Starsign / OpenSC (outros tokens)",
-       "library": "/usr/lib/x86_64-linux-gnu/opensc-pkcs11.so"
-     }
-   ],
-   "currentDriver": "Token SafeNet (eToken 5100/5110 — Certisign, Serasa, Valid)"
-}
-EOF
-```
-
-### 5. Criar ícone e autostart
-
-```bash
-# Ícone no menu e área de trabalho
-cat > ~/.local/share/applications/PJeOfficePro.desktop << EOF
-[Desktop Entry]
-Name=PJeOffice Pro
-Exec=$HOME/pjeoffice-pro/pjeoffice-pro.sh
-Icon=$HOME/pjeoffice-pro.png
-Terminal=false
-Type=Application
-Categories=Office;Java;
-StartupWMClass=br-jus-cnj-pje-office-imp-PjeOfficeApp
-EOF
-
-# Abrir automaticamente no login
-mkdir -p ~/.config/autostart
-cp ~/.local/share/applications/PJeOfficePro.desktop ~/.config/autostart/
-```
-
-### 6. Abrir o PJeOffice
-
-```bash
-~/pjeoffice-pro/pjeoffice-pro.sh
+curl -fsSL https://raw.githubusercontent.com/vitorcanoas/pje-no-linux/main/instalar.sh | bash
 ```
 
 ---
 
-## Como usar com o token
+## Quer contribuir?
 
-1. Conecte seu token USB antes de abrir o PJeOffice
-2. Abra o PJeOffice Pro (ícone na área de trabalho)
-3. Acesse o sistema do tribunal pelo navegador (ex: TRT, TJSP, etc.)
-4. Quando o site pedir assinatura, o PJeOffice vai abrir a tela de certificados automaticamente
-5. Selecione o certificado com a validade mais recente (os em vermelho estão expirados)
-6. Digite o PIN do token quando solicitado
-
-> **Dica:** Se tiver dois tokens (ex: eToken 5100 e GD Starsign), vá em **Configuração de certificado** dentro do PJeOffice para trocar o driver ativo.
+Se este guia te ajudou e você quer ajudar outros colegas advogados:
+- Compartilhe com sua OAB seccional
+- Abra um [Pull Request](https://github.com/vitorcanoas/pje-no-linux/pulls) com melhorias
+- Reporte problemas em [Issues](https://github.com/vitorcanoas/pje-no-linux/issues)
 
 ---
 
-## Problemas comuns
-
-### "Não foi possível encontrar o PJe Office" no navegador
-
-O PJeOffice precisa estar rodando em segundo plano antes de acessar o sistema do tribunal.
-- Solução: Abra o PJeOffice primeiro, depois acesse o site.
-
-### A lista de certificados aparece vazia
-
-Causas possíveis:
-1. **Token não conectado** — verifique se o token está firmemente encaixado na porta USB
-2. **Driver errado** — vá em Configuração de certificado e verifique se o driver correto está selecionado
-3. **Driver não instalado** — rode o script de instalação novamente
-
-Para verificar se o sistema detecta seu token:
-```bash
-pkcs11-tool --module /usr/lib/libeToken.so --list-slots
-```
-
-### Certificados aparecem em vermelho
-
-Certificados em vermelho estão **expirados**. Selecione sempre o que está em preto/azul com a data de validade mais futura. Para renovar, entre em contato com seu emissor (Certisign, OAB, Serasa, etc.).
-
-### PJeOffice não abre / tela preta
-
-```bash
-# Rode diretamente pelo terminal para ver o erro:
-cd ~/pjeoffice-pro && ./jre/bin/java -Dpjeoffice_home=$HOME/pjeoffice-pro -jar pjeoffice-pro.jar
-```
-
----
-
-## Estrutura do repositório
-
-```
-📦 pjeofficelinuxparaadvogados/
-├── 📄 README.md          — Este guia
-├── 🔧 instalar.sh        — Script de instalação automática
-├── 📁 docs/
-│   ├── tokens.md         — Guia detalhado por modelo de token
-│   └── troubleshooting.md — Problemas e soluções
-└── 📁 assets/
-    └── pjeoffice-pro.png — Ícone do PJeOffice
-```
-
----
-
-## Contribuindo
-
-Encontrou um token que funciona diferente? Tem uma dica que ajudou você?
-Abra uma [Issue](https://github.com/vitorcanoas/pjeofficelinuxparaadvogados/issues) ou envie um Pull Request. Quanto mais advogados contribuírem, mais completo fica para todos.
-
----
-
-## Licença
-
-MIT — use, copie e compartilhe à vontade. Se ajudar algum colega advogado a migrar para o Linux, já valeu.
-
----
-
-*Feito com ☕ e muita paciência por [Vitor Canoas](https://github.com/vitorcanoas)*
+*Feito com ☕ e muita paciência por [Vitor Canoas](https://github.com/vitorcanoas) — advogado que migrou para o Linux e sobreviveu para contar a história.*

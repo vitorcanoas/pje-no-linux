@@ -1,9 +1,10 @@
 #!/bin/bash
 
 # =============================================================================
-# PJeOffice Pro + Certificado Digital no Linux
+# PJe no Linux — Instalador para Advogados
+# Instala: Google Chrome + PJeOffice Pro + Driver do Token + Web Signer
 # Compatível com: Zorin OS 17/18, Ubuntu 22.04/24.04, Linux Mint 21/22
-# Autor: Vitor Canoas | github.com/vitorcanoas/pjeofficelinuxparaadvogados
+# Repositório: github.com/vitorcanoas/pje-no-linux
 # =============================================================================
 
 set -e
@@ -18,213 +19,240 @@ NC='\033[0m'
 ok()   { echo -e "${GREEN}✓ $1${NC}"; }
 info() { echo -e "${BLUE}➤ $1${NC}"; }
 warn() { echo -e "${YELLOW}⚠ $1${NC}"; }
-erro() { echo -e "${RED}✗ $1${NC}"; exit 1; }
+erro() { echo -e "${RED}✗ ERRO: $1${NC}"; exit 1; }
 
+clear
 echo ""
-echo -e "${BOLD}================================================================${NC}"
-echo -e "${BOLD}   PJeOffice Pro + Certificado Digital — Instalador Linux      ${NC}"
-echo -e "${BOLD}================================================================${NC}"
+echo -e "${BOLD}=============================================================${NC}"
+echo -e "${BOLD}        PJe no Linux — Instalador para Advogados             ${NC}"
+echo -e "${BOLD}=============================================================${NC}"
 echo ""
-echo -e "Este script instala e configura:"
-echo -e "  • PJeOffice Pro (assinador digital do CNJ)"
-echo -e "  • Driver SafeNet (tokens eToken 5100/5110 — Certisign, Serasa...)"
-echo -e "  • Driver OpenSC  (tokens GD Starsign, Pronova e outros)"
-echo -e "  • Dependências do sistema (pcscd, opensc, libccid)"
-echo -e "  • Ícone e autostart no login"
+echo -e "Este script vai instalar e configurar automaticamente:"
 echo ""
-warn "Será necessário digitar sua senha de administrador."
+echo -e "  ${GREEN}✓${NC} Google Chrome (navegador oficial para o PJe e eSAJ)"
+echo -e "  ${GREEN}✓${NC} Driver do certificado digital (token USB)"
+echo -e "  ${GREEN}✓${NC} PJeOffice Pro (assinador dos tribunais)"
+echo -e "  ${GREEN}✓${NC} Web Signer (para assinar no eSAJ/TJSP)"
 echo ""
-read -p "Pressione ENTER para continuar ou Ctrl+C para cancelar..."
+echo -e "${YELLOW}Durante a instalação será pedida sua senha de administrador."
+echo -e "Quando digitar a senha, as letras não aparecem — isso é normal.${NC}"
+echo ""
+read -rp "Pressione ENTER para começar (ou Ctrl+C para cancelar)..."
+echo ""
 
 # =============================================================================
 # 1. DEPENDÊNCIAS DO SISTEMA
 # =============================================================================
 info "Instalando dependências do sistema..."
-sudo apt-get update -qq
+sudo apt-get update -qq 2>/dev/null
 sudo apt-get install -y -qq \
     pcscd \
     opensc \
     opensc-pkcs11 \
     libccid \
     libpcsclite1 \
-    libnss3-tools \
     wget \
-    unzip \
-    curl
+    curl \
+    unzip 2>/dev/null
 ok "Dependências instaladas"
 
 # =============================================================================
-# 2. DRIVER SAFENET (eToken 5100/5110 — Certisign, Serasa, Valid, Soluti)
+# 2. GOOGLE CHROME (versão .deb — necessário para o Web Signer funcionar)
 # =============================================================================
-info "Baixando driver SafeNet Authentication Client 10.8..."
-SAC_URL="https://www.globalsign.com/en/safenet-drivers/USB/10.8/GlobalSign-SAC-Ubuntu-2204.zip"
-SAC_ZIP="/tmp/sac_installer.zip"
-SAC_DEB="safenetauthenticationclient_10.8.1050_amd64.deb"
-
-wget -q --show-progress "$SAC_URL" -O "$SAC_ZIP"
-unzip -o -q "$SAC_ZIP" -d /tmp/sac_extract/
-
-cd /tmp/sac_extract/Ubuntu-2204/
-sha1sum -c "${SAC_DEB}.sha1sum.txt" > /dev/null 2>&1 || erro "Arquivo corrompido. Tente novamente."
-
-info "Instalando driver SafeNet..."
-sudo dpkg -i "$SAC_DEB" || sudo apt-get install -f -y -qq
-ok "Driver SafeNet instalado — biblioteca: /usr/lib/libeToken.so"
-cd - > /dev/null
+if command -v google-chrome &>/dev/null && [ -f /opt/google/chrome/chrome ]; then
+    ok "Google Chrome já instalado ($(google-chrome --version))"
+else
+    info "Baixando e instalando Google Chrome..."
+    wget -q --show-progress \
+        "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" \
+        -O /tmp/google-chrome.deb
+    sudo dpkg -i /tmp/google-chrome.deb 2>/dev/null || sudo apt-get install -f -y -qq
+    ok "Google Chrome instalado"
+fi
 
 # =============================================================================
-# 3. REINICIAR PCSCD
+# 3. DRIVER SAFENET (tokens eToken 5100/5110 — Certisign, OAB, Serasa, Valid)
 # =============================================================================
-info "Reiniciando serviço de smart card..."
+if [ -f /usr/lib/libeToken.so ]; then
+    ok "Driver SafeNet já instalado"
+else
+    info "Baixando driver do certificado digital (SafeNet)..."
+    wget -q --show-progress \
+        "https://www.globalsign.com/en/safenet-drivers/USB/10.8/GlobalSign-SAC-Ubuntu-2204.zip" \
+        -O /tmp/sac.zip
+    unzip -o -q /tmp/sac.zip -d /tmp/sac_extract/
+    info "Instalando driver SafeNet..."
+    sudo dpkg -i /tmp/sac_extract/Ubuntu-2204/safenetauthenticationclient_10.8.1050_amd64.deb \
+        2>/dev/null || sudo apt-get install -f -y -qq
+    ok "Driver do certificado instalado"
+fi
+
+# =============================================================================
+# 4. REINICIAR SERVIÇO DE SMART CARD
+# =============================================================================
+info "Iniciando serviço de leitura de token..."
+sudo systemctl enable pcscd 2>/dev/null
 sudo systemctl restart pcscd
-ok "pcscd reiniciado"
+ok "Serviço de token iniciado"
 
 # =============================================================================
-# 4. DOWNLOAD DO PJEOFFICE PRO
+# 5. PJEOFFICE PRO
 # =============================================================================
-info "Baixando PJeOffice Pro..."
-PJE_URL="https://pje-office.pje.jus.br/pro/pjeoffice-pro-linux_x64.zip"
-PJE_ZIP="/tmp/pjeoffice-pro.zip"
 PJE_DIR="$HOME/pjeoffice-pro"
-
-wget -q --show-progress "$PJE_URL" -O "$PJE_ZIP"
-
-info "Extraindo PJeOffice Pro..."
-mkdir -p "$PJE_DIR"
-unzip -o -q "$PJE_ZIP" -d "$PJE_DIR"
-chmod +x "$PJE_DIR/pjeoffice-pro.sh"
-chmod +x "$PJE_DIR/jre/bin/java"
-ok "PJeOffice Pro extraído em $PJE_DIR"
-
-# =============================================================================
-# 5. BAIXAR ÍCONE OFICIAL
-# =============================================================================
-info "Baixando ícone do PJeOffice..."
-wget -q "https://pje-office.pje.jus.br/pro/img/icone-pje-office-pro.png" \
-    -O "$HOME/pjeoffice-pro.png" 2>/dev/null || \
-wget -q "https://raw.githubusercontent.com/vitorcanoas/pjeofficelinuxparaadvogados/main/assets/pjeoffice-pro.png" \
-    -O "$HOME/pjeoffice-pro.png" 2>/dev/null || true
-ok "Ícone salvo"
+if [ -f "$PJE_DIR/pjeoffice-pro.jar" ]; then
+    ok "PJeOffice Pro já instalado"
+else
+    info "Baixando PJeOffice Pro (pode demorar alguns minutos)..."
+    wget -q --show-progress \
+        "https://pje-office.pje.jus.br/pro/pjeoffice-pro-linux_x64.zip" \
+        -O /tmp/pjeoffice.zip || \
+    wget -q --show-progress \
+        "https://pje-office.pje.jus.br/pro/pjeoffice-pro-v2.5.16u-linux_x64.zip" \
+        -O /tmp/pjeoffice.zip
+    info "Instalando PJeOffice Pro..."
+    mkdir -p "$PJE_DIR"
+    unzip -o -q /tmp/pjeoffice.zip -d "$PJE_DIR"
+    chmod +x "$PJE_DIR/pjeoffice-pro.sh"
+    chmod +x "$PJE_DIR/jre/bin/java"
+    ok "PJeOffice Pro instalado"
+fi
 
 # =============================================================================
 # 6. CONFIGURAR CERTIFICADO NO PJEOFFICE
 # =============================================================================
-info "Configurando drivers de certificado no PJeOffice..."
+info "Configurando o certificado no PJeOffice..."
 mkdir -p "$HOME/.pjeoffice-pro"
-
 cat > "$HOME/.pjeoffice-pro/pjeoffice-pro.json" << 'EOF'
 {
    "drivers": [
      {
-       "name": "Token SafeNet (eToken 5100/5110 — Certisign, Serasa, Valid)",
+       "name": "Token SafeNet (eToken 5100/5110 — Certisign, OAB, Serasa, Valid)",
        "library": "/usr/lib/libeToken.so"
      },
      {
-       "name": "Token GD Starsign / OpenSC (outros tokens)",
+       "name": "Token GD Starsign e outros (OpenSC)",
        "library": "/usr/lib/x86_64-linux-gnu/opensc-pkcs11.so"
      }
    ],
-   "currentDriver": "Token SafeNet (eToken 5100/5110 — Certisign, Serasa, Valid)"
+   "currentDriver": "Token SafeNet (eToken 5100/5110 — Certisign, OAB, Serasa, Valid)"
 }
 EOF
-ok "Drivers configurados"
+ok "Certificado configurado no PJeOffice"
 
 # =============================================================================
-# 7. ÍCONE NA ÁREA DE TRABALHO
+# 7. WEB SIGNER (para eSAJ/TJSP e outros tribunais SAJ)
+# =============================================================================
+if dpkg -l softplan-websigner &>/dev/null 2>&1 | grep -q "^ii"; then
+    ok "Web Signer já instalado"
+else
+    info "Baixando Web Signer (eSAJ/TJSP)..."
+    wget -q --show-progress \
+        "https://websigner.softplan.com.br/Downloads/2.9.5/webpki-chrome-64-deb" \
+        -O /tmp/websigner.deb
+    info "Instalando Web Signer..."
+    sudo dpkg -i /tmp/websigner.deb 2>/dev/null || sudo apt-get install -f -y -qq
+    ok "Web Signer instalado"
+fi
+
+# Configurar Native Messaging para Chrome
+sudo mkdir -p /etc/opt/chrome/native-messaging-hosts/
+sudo cp /opt/softplan-websigner/manifest.json \
+    /etc/opt/chrome/native-messaging-hosts/br.com.softplan.webpki.json
+ok "Web Signer configurado para o Chrome"
+
+# =============================================================================
+# 8. ÍCONE E ÁREA DE TRABALHO
 # =============================================================================
 info "Criando ícones..."
-DESKTOP_FILE="$HOME/.local/share/applications/PJeOfficePro.desktop"
-mkdir -p "$HOME/.local/share/applications"
+ICON_PATH="$HOME/pjeoffice-pro.png"
 
-cat > "$DESKTOP_FILE" << EOF
+# Baixar ícone
+wget -q "https://raw.githubusercontent.com/vitorcanoas/pje-no-linux/main/assets/pjeoffice-pro.png" \
+    -O "$ICON_PATH" 2>/dev/null || true
+
+# Criar .desktop
+mkdir -p "$HOME/.local/share/applications"
+cat > "$HOME/.local/share/applications/PJeOfficePro.desktop" << EOF
 [Desktop Entry]
 Name=PJeOffice Pro
 Exec=$PJE_DIR/pjeoffice-pro.sh
-Icon=$HOME/pjeoffice-pro.png
+Icon=$ICON_PATH
 Terminal=false
 Type=Application
 Categories=Office;Java;
 StartupWMClass=br-jus-cnj-pje-office-imp-PjeOfficeApp
 EOF
 
-# Área de trabalho
-DESKTOP_PATH="$HOME/Área de trabalho"
-[ -d "$HOME/Desktop" ] && DESKTOP_PATH="$HOME/Desktop"
-cp "$DESKTOP_FILE" "$DESKTOP_PATH/PJeOfficePro.desktop" 2>/dev/null || true
-chmod +x "$DESKTOP_PATH/PJeOfficePro.desktop" 2>/dev/null || true
+# Copiar para área de trabalho
+for DESKTOP in "$HOME/Desktop" "$HOME/Área de trabalho"; do
+    if [ -d "$DESKTOP" ]; then
+        cp "$HOME/.local/share/applications/PJeOfficePro.desktop" "$DESKTOP/" 2>/dev/null || true
+        chmod +x "$DESKTOP/PJeOfficePro.desktop" 2>/dev/null || true
+    fi
+done
 
 update-desktop-database "$HOME/.local/share/applications/" 2>/dev/null || true
-ok "Ícones criados"
+ok "Ícone criado na área de trabalho"
 
 # =============================================================================
-# 8. AUTOSTART NO LOGIN
+# 9. AUTOSTART (abrir PJeOffice automaticamente ao ligar o computador)
 # =============================================================================
-info "Configurando inicialização automática..."
+info "Configurando abertura automática no login..."
 mkdir -p "$HOME/.config/autostart"
-
 cat > "$HOME/.config/autostart/PJeOfficePro.desktop" << EOF
 [Desktop Entry]
 Name=PJeOffice Pro
 Exec=$PJE_DIR/pjeoffice-pro.sh
-Icon=$HOME/pjeoffice-pro.png
+Icon=$ICON_PATH
 Terminal=false
 Type=Application
-Categories=Office;Java;
 X-GNOME-Autostart-enabled=true
 X-GNOME-Autostart-Delay=5
 StartupWMClass=br-jus-cnj-pje-office-imp-PjeOfficeApp
 EOF
-ok "PJeOffice configurado para abrir automaticamente no login"
+ok "PJeOffice configurado para abrir no login"
 
 # =============================================================================
-# VERIFICAÇÃO FINAL
+# INSTALAÇÃO CONCLUÍDA
 # =============================================================================
-echo ""
-echo -e "${BOLD}================================================================${NC}"
-echo -e "${GREEN}${BOLD}   Instalação concluída com sucesso!${NC}"
-echo -e "${BOLD}================================================================${NC}"
-echo ""
-echo -e "O que foi instalado:"
-echo -e "  ${GREEN}✓${NC} Driver SafeNet (eToken 5100/5110)"
-echo -e "  ${GREEN}✓${NC} Driver OpenSC (outros tokens)"
-echo -e "  ${GREEN}✓${NC} PJeOffice Pro em ~/pjeoffice-pro"
-echo -e "  ${GREEN}✓${NC} Ícone na área de trabalho"
-echo -e "  ${GREEN}✓${NC} Abre automaticamente no login"
-echo ""
 
-# Teste do token (se conectado)
+# Testar token
+TOKEN_INFO=""
 if pkcs11-tool --module /usr/lib/libeToken.so --list-slots 2>/dev/null | grep -q "token label"; then
-    TOKEN=$(pkcs11-tool --module /usr/lib/libeToken.so --list-slots 2>/dev/null | grep "token label" | cut -d: -f2 | xargs)
-    echo -e "  ${GREEN}✓${NC} Token detectado: ${BOLD}$TOKEN${NC}"
-else
-    warn "Nenhum token conectado agora. Conecte seu token antes de usar o PJeOffice."
+    TOKEN_INFO=$(pkcs11-tool --module /usr/lib/libeToken.so --list-slots 2>/dev/null | grep "token label" | cut -d: -f2 | xargs)
 fi
 
+clear
 echo ""
-echo -e "  Para usar: clique em ${BOLD}PJeOffice Pro${NC} na área de trabalho"
-echo -e "  Dúvidas: github.com/vitorcanoas/pjeofficelinuxparaadvogados"
+echo -e "${BOLD}=============================================================${NC}"
+echo -e "${GREEN}${BOLD}          Instalação concluída com sucesso!               ${NC}"
+echo -e "${BOLD}=============================================================${NC}"
+echo ""
+echo -e "  ${GREEN}✓${NC} Google Chrome instalado"
+echo -e "  ${GREEN}✓${NC} Driver do certificado digital instalado"
+echo -e "  ${GREEN}✓${NC} PJeOffice Pro instalado"
+echo -e "  ${GREEN}✓${NC} Web Signer instalado"
 echo ""
 
-# =============================================================================
-# 9. WEBSIGNER (eSAJ / TJSP e outros tribunais SAJ)
-# =============================================================================
-info "Instalando Web Signer (eSAJ/TJSP)..."
+if [ -n "$TOKEN_INFO" ]; then
+    echo -e "  ${GREEN}✓${NC} Token detectado: ${BOLD}$TOKEN_INFO${NC}"
+    echo ""
+fi
 
-WEBSIGNER_URL="https://websigner.softplan.com.br/Downloads/2.9.5/webpki-chrome-64-deb"
-wget -q --show-progress "$WEBSIGNER_URL" -O /tmp/websigner.deb
-
-sudo dpkg -i /tmp/websigner.deb || sudo apt-get install -f -y -qq
-
-# Configurar Native Messaging para Chrome .deb
-sudo mkdir -p /etc/opt/chrome/native-messaging-hosts/
-sudo cp /opt/softplan-websigner/manifest.json \
-    /etc/opt/chrome/native-messaging-hosts/br.com.softplan.webpki.json
-
-ok "Web Signer instalado"
+echo -e "${BOLD}PRÓXIMOS PASSOS:${NC}"
 echo ""
-warn "Para o eSAJ funcionar, após instalar:"
-echo "  1. Instale a extensão Web Signer no Chrome:"
-echo "     https://chromewebstore.google.com/detail/web-signer/bbafmabaelnnkondpfpjmdklbmfnbmol"
-echo "  2. Abra o Web Signer → Configurações → Cripto Dispositivos"
-echo "  3. No campo 'Nome do arquivo SO' digite: libeToken.so"
-echo "  4. Clique em + para adicionar"
+echo -e "  ${BOLD}Para usar o PJeOffice (TRT, TRF, etc.):${NC}"
+echo -e "  1. Conecte seu token USB"
+echo -e "  2. Clique no ícone ${BOLD}PJeOffice Pro${NC} na área de trabalho"
+echo -e "  3. Acesse o sistema do tribunal no navegador"
+echo ""
+echo -e "  ${BOLD}Para usar o eSAJ/TJSP — configure o Web Signer (uma única vez):${NC}"
+echo -e "  1. Abra o Google Chrome"
+echo -e "  2. Instale a extensão Web Signer:"
+echo -e "     ${BLUE}https://chromewebstore.google.com/detail/web-signer/bbafmabaelnnkondpfpjmdklbmfnbmol${NC}"
+echo -e "  3. Clique no ícone do Web Signer → Configurações → Cripto Dispositivos"
+echo -e "  4. No campo 'Nome do arquivo SO' digite: ${BOLD}libeToken.so${NC}"
+echo -e "  5. Clique em ${BOLD}+${NC} para adicionar"
+echo ""
+echo -e "  Dúvidas? Acesse: ${BLUE}github.com/vitorcanoas/pje-no-linux${NC}"
+echo ""
