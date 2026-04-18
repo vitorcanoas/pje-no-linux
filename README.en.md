@@ -212,4 +212,4 @@ bash -n instalar.sh
 
 ---
 
-*Open source project. Contributions welcome.*
+*Open source project licensed under [GPL-3.0](LICENSE). Use it, improve it, share it — but keep it open.*

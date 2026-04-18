@@ -213,4 +213,4 @@ bash -n instalar.sh
 
 ---
 
-*Projeto open source. Contribuições são bem-vindas.*
+*Projeto open source licenciado sob [GPL-3.0](LICENSE). Pode usar, melhorar e compartilhar — mas tem que continuar aberto.*
