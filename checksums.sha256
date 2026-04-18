@@ -1,0 +1,21 @@
+# PJe no Linux — SHA256 checksums
+# Verificar com: sha256sum -c checksums.sha256
+#
+# PROCESSO PARA O MANTENEDOR:
+#   1. Baixar cada binário offline
+#   2. sha256sum <arquivo>
+#   3. Substituir o PLACEHOLDER correspondente pelo hash real
+#   4. Commitar instalar.sh + checksums.sha256 juntos
+#
+# NUNCA commitar o script sem os hashes reais preenchidos.
+# NUNCA usar em produção com PLACEHOLDER nos hashes.
+#
+# Versão dos componentes: SAC=10.8.1050, SafeSign=4.2.1.0,
+#   PJeOffice=v2.5.16u, WebSigner=2.12.1
+
+PLACEHOLDER_calcular_sha256sum  google-chrome-stable_current_amd64.deb
+PLACEHOLDER_calcular_sha256sum  GlobalSign-SAC-Ubuntu-2204.zip
+PLACEHOLDER_calcular_sha256sum  SafeSign_IC_Standard_Linux_4.2.1.0_AET.000_ub2204_x86_64.deb
+PLACEHOLDER_calcular_sha256sum  pjeoffice-pro-v2.5.16u-linux_x64.zip
+PLACEHOLDER_calcular_sha256sum  webpki-chrome-64-deb
+PLACEHOLDER_calcular_sha256sum  antigravity-linux.deb
