@@ -37,7 +37,7 @@ Copie o comando abaixo, cole no terminal com **Ctrl + Shift + V** e pressione **
 curl -fsSL https://raw.githubusercontent.com/vitorcanoas/pje-no-linux/main/instalar.sh | bash
 ```
 
-![Terminal com o comando de instalação](assets/screenshots/01-terminal-comando.png)
+![Terminal com o comando de instalação](assets/screenshots/01-terminal.png)
 
 > Quando pedir senha, as letras não aparecem na tela — isso é normal, é uma proteção do sistema.
 
@@ -60,7 +60,7 @@ Esta configuração é feita **uma única vez** no navegador:
 6. No campo **"Nome do arquivo SO"**, digite exatamente: `libeToken.so`
 7. Clique no botão **+**
 
-![Configuração do Web Signer — Cripto Dispositivos](assets/screenshots/03-websigner-config.png)
+![Configuração do Web Signer — Cripto Dispositivos](assets/screenshots/03-websigner.png)
 
 ---
 
@@ -68,11 +68,11 @@ Esta configuração é feita **uma única vez** no navegador:
 
 **PJeOffice — token reconhecido:**
 
-![PJeOffice reconhecendo o token](assets/screenshots/02-pjeoffice-token.png)
+![PJeOffice reconhecendo o token](assets/screenshots/02-pjeoffice.png)
 
 **eSAJ — certificado disponível:**
 
-![eSAJ com certificado funcionando](assets/screenshots/04-esaj-certificado.png)
+![eSAJ com certificado funcionando](assets/screenshots/04-esaj.png)
 
 ---
 
