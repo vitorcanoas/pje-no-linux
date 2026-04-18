@@ -82,4 +82,10 @@ if [[ -d "/usr/local/share/pje-no-linux" ]]; then
     log_ok "Ícones e recursos de /usr/local/share/pje-no-linux removidos."
 fi
 
+# Atalho Super+Shift+S
+if command -v gsettings &>/dev/null; then
+    gsettings reset org.gnome.shell.keybindings show-screenshot-ui 2>/dev/null \
+        && log_ok "Atalho Super+Shift+S revertido ao padrão do sistema."
+fi
+
 printf "\nDesinstalação concluída.\n"

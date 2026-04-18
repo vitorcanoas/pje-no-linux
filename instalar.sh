@@ -537,6 +537,28 @@ EOF
     fi
 }
 
+configure_screenshot_shortcut() {
+    log_info "=== Atalho Captura de Tela (Super+Shift+S) ==="
+
+    if ! command -v gsettings &>/dev/null; then
+        log_warn "gsettings não disponível — atalho não configurado automaticamente."
+        INSTALL_STATUS["screenshot"]="skipped"
+        return
+    fi
+
+    # Equivalente ao Win+Shift+S do Windows: captura de área selecionável
+    if gsettings set org.gnome.shell.keybindings show-screenshot-ui \
+        "['<Shift><Super>s']" 2>/dev/null; then
+        log_ok "Super+Shift+S configurado para captura de tela de área."
+        INSTALL_STATUS["screenshot"]="ok"
+    else
+        log_warn "Não foi possível configurar o atalho automaticamente."
+        log_warn "  Manual: Configurações → Teclado → Atalhos → Capturas de tela"
+        log_warn "  → 'Fazer uma captura de tela interativamente' → pressione Super+Shift+S"
+        INSTALL_STATUS["screenshot"]="fail"
+    fi
+}
+
 install_all() {
     install_chrome
     install_sac
@@ -548,6 +570,7 @@ install_all() {
     configure_pkcs11
     configure_native_messaging
     prompt_autostart
+    configure_screenshot_shortcut
 }
 
 # =============================================================================
@@ -567,10 +590,11 @@ show_final_status() {
         [websigner]="Web Signer ${WEBSIGNER_VERSION}"
         [antigravity]="Antigravity IDE"
         [office_pwa]="Microsoft 365 PWA"
+        [screenshot]="Atalho Super+Shift+S (captura de área)"
     )
 
     local component
-    for component in chrome sac safesign pjeoffice websigner antigravity office_pwa; do
+    for component in chrome sac safesign pjeoffice websigner antigravity office_pwa screenshot; do
         local status="${INSTALL_STATUS[$component]:-fail}"
         local label="${labels[$component]}"
         case "$status" in
