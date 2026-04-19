@@ -46,6 +46,7 @@ readonly ANTIGRAVITY_HASH="ba16cb265fb823c8b738680e1497dfeb7990d4951566beb828d5b
 # Log — captura toda saída (inclusive tela de consentimento)
 LOG_FILE="$HOME/pje-install-$(date +%Y%m%d-%H%M%S).log"
 readonly LOG_FILE
+touch "$LOG_FILE" && chmod 600 "$LOG_FILE"
 exec > >(tee -a "$LOG_FILE") 2>&1
 
 # Cores
@@ -293,7 +294,8 @@ install_chrome() {
 
     if [[ ! -f "$CHROME_APT_KEYRING" ]]; then
         log_info "Importando chave GPG do Google..."
-        wget -qO- "$CHROME_APT_KEY_URL" | sudo gpg --dearmor -o "$CHROME_APT_KEYRING"
+        wget --timeout=30 --tries=3 -qO- "$CHROME_APT_KEY_URL" \
+            | sudo gpg --dearmor -o "$CHROME_APT_KEYRING"
         log_ok "Chave GPG do Google importada."
     fi
 
