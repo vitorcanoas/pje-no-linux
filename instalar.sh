@@ -38,7 +38,7 @@ readonly ANTIGRAVITY_URL="https://antigravity.google/download/linux"
 readonly SAC_HASH="0583c3e5478a5251803af16f0bbd7d2a4e48d20188deb9dc6178456ec8d20316"
 readonly SAFESIGN_HASH="69307586b99f13bfd67bece4629ac84c920f6f317b5c6b91e2afa79977508f22"
 readonly PJEOFFICE_HASH="6087391759c7cba11fb5ef815fe8be91713b46a8607c12eb664a9d9a6882c4c7"
-readonly WEBSIGNER_HASH="5da8fd36f1371f52bbaebede75fade1928f09cff2dd605b8da5663c6da505379"
+readonly WEBSIGNER_HASH="04fa41e962d91e4d7337f4707479437bf660f19057fac63829fb46784ee08289"
 # Antigravity: snap preferido (sandbox); .deb como fallback
 readonly ANTIGRAVITY_SNAP="antigravity"
 readonly ANTIGRAVITY_HASH="ba16cb265fb823c8b738680e1497dfeb7990d4951566beb828d5b3547564f28b"
@@ -353,8 +353,42 @@ install_safesign() {
         return
     fi
 
+    # SafeSign IC 4.6 (empacotado p/ Ubuntu 22.04) depende da wxWidgets 3.0
+    # (libwxbase3.0-0v5 e libwxgtk3.0-gtk3-0v5). Essas libs FORAM REMOVIDAS
+    # no Ubuntu 24.04 / Zorin 18 / Debian 12+, então o apt não as encontra.
+    # Estratégia: tentar o apt normal (resolve em 22.04); se falhar, baixar
+    # os .deb da wx 3.0 do repositório Jammy (universe) e deixar o apt
+    # resolver as dependências transitivas com os repos atuais.
+    if ! sudo apt-get install -y -q libwxbase3.0-0v5 libwxgtk3.0-gtk3-0v5 2>/dev/null; then
+        log_warn "SafeSign: wxWidgets 3.0 ausente nos repos (esperado em 24.04/Zorin 18/Debian 12+)."
+        log_info "SafeSign: baixando wxWidgets 3.0 + libtiff5 do repositório Ubuntu 22.04 (Jammy)..."
+        # A wx 3.0 puxa libtiff5, que TAMBÉM foi removida no 24.04 (virou libtiff6).
+        # Baixamos as 3 libs órfãs do Jammy; suas demais dependências (libjbig0,
+        # libwebp7, libzstd1, libnotify4...) ainda existem no 24.04 e o apt resolve.
+        local deb_urls=(
+            "http://archive.ubuntu.com/ubuntu/pool/main/t/tiff/libtiff5_4.3.0-6_amd64.deb"
+            "http://archive.ubuntu.com/ubuntu/pool/universe/w/wxwidgets3.0/libwxbase3.0-0v5_3.0.5.1+dfsg-4_amd64.deb"
+            "http://archive.ubuntu.com/ubuntu/pool/universe/w/wxwidgets3.0/libwxgtk3.0-gtk3-0v5_3.0.5.1+dfsg-4_amd64.deb"
+        )
+        local ok_wx=true url fname local_debs=()
+        for url in "${deb_urls[@]}"; do
+            fname="$(basename "$url")"
+            if wget --timeout=30 --tries=3 -q -O "${TMPDIR_WORK}/${fname}" "$url"; then
+                local_debs+=("${TMPDIR_WORK}/${fname}")
+            else
+                log_warn "SafeSign: falha ao baixar ${fname}."
+                ok_wx=false
+            fi
+        done
+        if $ok_wx; then
+            # Instala as 3 juntas; apt resolve as dependências base modernas.
+            sudo apt-get install -y -q "${local_debs[@]}" \
+                || log_warn "SafeSign: apt não conseguiu instalar as libs — dpkg tentará a seguir."
+        fi
+    fi
+
     sudo dpkg -i "$deb_file" || sudo apt-get install -f -y -q
-    verify_installed "safesign" "safesign"
+    verify_installed "safesign" "safesignidentityclient"
 }
 
 install_pjeoffice() {
@@ -366,20 +400,60 @@ install_pjeoffice() {
     mkdir -p "$pje_dir"
     unzip -q "${TMPDIR_WORK}/${zipfile}" -d "$pje_dir"
 
-    # Detectar formato de instalação: .deb ou script install.sh
+    # Detectar formato de instalação: .deb, script install.sh, ou pasta portátil
     local deb_file
     deb_file="$(find "$pje_dir" -name "*.deb" | head -1)"
     if [[ -n "$deb_file" ]]; then
         sudo dpkg -i "$deb_file" || sudo apt-get install -f -y -q
+        verify_installed "pjeoffice" "pjeoffice-pro"
+        return
     elif [[ -f "${pje_dir}/install.sh" ]]; then
         sudo bash "${pje_dir}/install.sh"
-    else
-        log_error "PJeOffice: formato de instalação não reconhecido no zip."
-        log_error "  Ação: instale manualmente a partir de docs.pje.jus.br/servicos-negociais/pjeoffice-pro/"
-        INSTALL_STATUS["pjeoffice"]="fail"
+        verify_installed "pjeoffice" "pjeoffice-pro"
         return
     fi
-    verify_installed "pjeoffice" "pjeoffice-pro"
+
+    # Formato portátil (atual): pasta pjeoffice-pro/ com JRE embutido e
+    # launcher pjeoffice-pro.sh. Não há .deb — instala-se copiando para /opt.
+    local portable_dir launcher
+    launcher="$(find "$pje_dir" -name "pjeoffice-pro.sh" | head -1)"
+    if [[ -n "$launcher" ]]; then
+        portable_dir="$(dirname "$launcher")"
+        log_info "PJeOffice: formato portátil detectado — instalando em /opt/pjeoffice-pro..."
+        sudo rm -rf /opt/pjeoffice-pro
+        sudo cp -r "$portable_dir" /opt/pjeoffice-pro
+        sudo chmod +x /opt/pjeoffice-pro/pjeoffice-pro.sh
+        sudo chmod +x /opt/pjeoffice-pro/jre/bin/java 2>/dev/null || true
+
+        # Atalho no menu de aplicativos
+        local apps_dir="$HOME/.local/share/applications"
+        mkdir -p "$apps_dir"
+        cat > "${apps_dir}/pjeoffice-pro.desktop" <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=PJeOffice Pro
+Comment=Assinador digital do PJe (CNJ)
+Exec=/opt/pjeoffice-pro/pjeoffice-pro.sh
+Icon=/opt/pjeoffice-pro/pjeoffice-pro.png
+Terminal=false
+Categories=Office;Utility;
+StartupNotify=true
+EOF
+
+        if [[ -x /opt/pjeoffice-pro/pjeoffice-pro.sh ]]; then
+            INSTALL_STATUS["pjeoffice"]="ok"
+            log_ok "PJeOffice Pro instalado em /opt/pjeoffice-pro (atalho criado no menu)."
+        else
+            INSTALL_STATUS["pjeoffice"]="fail"
+            log_error "PJeOffice: launcher não ficou executável em /opt/pjeoffice-pro."
+        fi
+        return
+    fi
+
+    log_error "PJeOffice: formato de instalação não reconhecido no zip."
+    log_error "  Ação: instale manualmente a partir de docs.pje.jus.br/servicos-negociais/pjeoffice-pro/"
+    INSTALL_STATUS["pjeoffice"]="fail"
+    return
 }
 
 install_websigner() {
@@ -389,7 +463,14 @@ install_websigner() {
         "webpki-chrome-64-deb" \
         "$WEBSIGNER_HASH"
     sudo dpkg -i "${TMPDIR_WORK}/webpki-chrome-64-deb" || sudo apt-get install -f -y -q
-    verify_installed "websigner" "webpki-chrome"
+    # O nome do pacote mudou entre versões: webpki-chrome (antigo) e
+    # softplan-websigner (2.15+). Aceita qualquer um dos dois.
+    if dpkg -l softplan-websigner 2>/dev/null | grep -q '^ii'; then
+        INSTALL_STATUS["websigner"]="ok"
+        log_ok "softplan-websigner: instalado e verificado via dpkg."
+    else
+        verify_installed "websigner" "webpki-chrome"
+    fi
 }
 
 install_antigravity() {
@@ -581,7 +662,7 @@ prompt_autostart() {
 [Desktop Entry]
 Type=Application
 Name=PJeOffice Pro
-Exec=/opt/pjeoffice-pro/bin/pjeoffice-pro
+Exec=/opt/pjeoffice-pro/pjeoffice-pro.sh
 Hidden=false
 NoDisplay=false
 X-GNOME-Autostart-enabled=true
