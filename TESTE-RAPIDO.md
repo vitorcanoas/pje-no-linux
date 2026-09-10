@@ -1,5 +1,9 @@
 # Teste Rápido — Certificado A3 antes da audiência
 
+> Voltar para a instalação: [README.md](README.md) · English overview:
+> [README.en.md](README.en.md) — *this troubleshooting guide is available in
+> Portuguese only; the commands themselves are language-neutral.*
+
 Guia de emergência. Siga NA ORDEM: cada passo testa a camada que costuma
 quebrar antes da próxima. Pare no primeiro que falhar e resolva ali — não
 adianta testar o e-SAJ se o leitor nem aparece pro sistema.

@@ -694,11 +694,18 @@ configure_pkcs11() {
     log_info "Detectando biblioteca PKCS#11 do SAC..."
     local pkcs11_lib=""
 
-    # No Arch as libs ficam em /usr/lib (não há multiarch como no Debian)
+    # No Arch as libs ficam em /usr/lib (não há multiarch como no Debian).
+    # O sac-core-legacy instala num diretório próprio, /usr/lib/sac-10.0/,
+    # porque leva junto os symlinks de libcrypto da OpenSSL 1.0 de que o
+    # módulo precisa — por isso ele vem antes: numa máquina com o legacy,
+    # os caminhos soltos em /usr/lib não existem e a busca cairia no
+    # fallback do pacman -Ql sem necessidade.
     local candidate
     for candidate in \
+        /usr/lib/sac-10.0/libeToken.so \
         /usr/lib/libeToken.so \
         /usr/lib/pkcs11/libeToken.so \
+        /usr/lib/sac-10.0/libIDPrimePKCS11.so \
         /usr/lib/libIDPrimePKCS11.so \
         /usr/lib/pkcs11/libIDPrimePKCS11.so; do
         if [[ -f "$candidate" ]]; then

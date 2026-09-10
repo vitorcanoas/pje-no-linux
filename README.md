@@ -384,6 +384,44 @@ O `instalar-arch.sh` instala o Chrome e o pacote nativo do Web Signer, mas **nã
 
 ---
 
+## Perguntas frequentes
+
+**"Funciona com meu certificado da Certisign / Serasa / Valid / Soluti?"**
+Provavelmente sim. Quem decide não é a Autoridade Certificadora que emitiu o
+certificado, e sim o **modelo do token ou da leitora** que você tem na mão — a
+mesma AC vende tokens de fabricantes diferentes. O script detecta o modelo e diz
+qual driver usar. A matriz cobre SafeNet/Thales/Aladdin, Feitian, GD Burti,
+Watchdata, Oberthur/Idemia/Morpho e leitoras de cartão. Se o seu modelo não
+estiver mapeado, o script testa todos os módulos instalados e diz o que
+encontrou, em vez de chutar.
+
+**"E se eu tiver mais de um certificado no token?"**
+É normal — acontece a cada renovação. O navegador pergunta qual você quer usar, e
+só o válido funciona. Os detalhes (e como listar todos com a validade real) estão
+em [Tenho VÁRIOS certificados no token. Isso é normal?](#tenho-vários-certificados-no-token-isso-é-normal).
+
+**"Isso apaga meu Windows?"**
+Não. Este projeto instala programas dentro do Linux que você já está usando. Ele
+**não toca em partição de disco nem no bootloader** — se você tem dual-boot, o
+Windows continua exatamente onde estava. (Aliás, o
+[TESTE-RAPIDO.md](TESTE-RAPIDO.md) sugere o Windows em dual-boot como plano B de
+emergência, justamente porque ele continua lá.)
+
+**"Posso usar Firefox?"**
+Dá para usar, mas não como navegador principal. O pacote do Web Signer registra o
+componente nativo para o Firefox também (ele instala em
+`/usr/lib/mozilla/native-messaging-hosts/`), então a assinatura pode funcionar
+lá. Só que **o e-SAJ e o PJe são homologados para o Chrome** — quando algo falhar,
+a primeira pergunta do suporte do tribunal será qual navegador você usou. Use o
+Firefox como alternativa, não como principal.
+
+**"Preciso do PJeOffice para o e-SAJ?"**
+Não. O **e-SAJ usa o Web Signer** (a extensão do Chrome + o componente nativo). O
+**PJeOffice Pro é para o PJe** — TRT e demais tribunais que usam a plataforma.
+Se você só trabalha no e-SAJ do TJSP, o PJeOffice não precisa estar aberto.
+
+---
+
 ## Sobre o autor
 
 Sou **Vitor**, advogado há mais de 10 anos, apaixonado por tecnologia e, atualmente, aprendendo a programar — porque aparentemente advocacia sozinha não é complicado o suficiente.
@@ -451,8 +489,8 @@ bash desinstalar-arch.sh
 ```
 
 Remove todos os pacotes, arquivos de configuração, atalhos e reverte o atalho de
-captura de tela. A versão Arch remove também a regra polkit
-`/etc/polkit-1/rules.d/50-pcscd-pje.rules` criada pelo instalador. Os dois são
+captura de tela. A versão Arch remove também a regra polkit (*regra de permissão
+do sistema*) `/etc/polkit-1/rules.d/50-pcscd-pje.rules` criada pelo instalador. Os dois são
 interativos e confirmam antes de remover qualquer coisa.
 
 ### Componentes e versões atuais

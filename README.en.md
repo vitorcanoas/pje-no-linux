@@ -6,7 +6,7 @@
 
 ## Which script do I run?
 
-This repository covers **two distro families**, each with its own installer:
+This repository covers two Linux "families" (each has its own way of installing programs) — find yours in the table:
 
 | Your distro | Run | Full guide |
 |---|---|---|
@@ -16,6 +16,13 @@ This repository covers **two distro families**, each with its own installer:
 Not sure which one you have? Run `cat /etc/os-release` in the Terminal — the `ID` or `ID_LIKE` field shows the family. **Ran the wrong one? The script tells you which one is right — nothing breaks.**
 
 Each guide above is the full step-by-step for that path, including a **Validação** (Validation) section with commands you run yourself to confirm the install worked. The guides are kept in Brazilian Portuguese only — the target audience is Brazilian lawyers, and this English README stays complete on its own rather than duplicating them. The step-by-step below is for **Ubuntu/Zorin/Mint/Debian**; for Arch/Omarchy, skip straight to the [Arch Linux / Omarchy](#arch-linux--omarchy) section.
+
+**Already installed it and something doesn't work?** Go straight to
+**[TESTE-RAPIDO.md](TESTE-RAPIDO.md)** — a cascading diagnostic, from the card
+reader all the way to the court website. **It is written in Portuguese only**
+(as is [DICAS.md](DICAS.md)); there is no English version of the
+troubleshooting guide, so plan on a translator if you don't read Portuguese —
+the commands themselves are language-neutral.
 
 Changes between versions — including any version or hash change of the proprietary components — are recorded in **[CHANGELOG.md](CHANGELOG.md)**.
 
@@ -53,6 +60,23 @@ One single command installs everything. No tech knowledge required.
 | **Microsoft 365** | Word, Excel, PowerPoint and Outlook running on Linux |
 
 It also configures the **Super+Shift+S** shortcut for area screenshots — same as Win+Shift+S on Windows.
+
+> ⚠️ **After the script finishes, one manual step remains:** installing the Web
+> Signer extension from the Chrome Web Store
+> ([Step 6](#step-6--configure-web-signer-one-time-only) below). The script does
+> **not** do this for you — without that extension, e-SAJ and PJe cannot see your
+> certificate.
+
+### What the installer will ask you
+
+It **stops and waits for an answer** at a few points. None of the answers is
+permanent — you can re-run the script later. Be ready for these:
+
+| Question | What to answer |
+|---|---|
+| *"Deseja continuar?"* (continue? — after the summary of what will be installed) | `s` (for *sim*, yes) to proceed. |
+| *"Conecte o token USB AGORA e pressione Enter"* (plug the USB token in NOW and press Enter) | Plug the token in and press Enter — that's how the script identifies the model and picks the right driver. **If your certificate is A1** (a `.pfx`/`.p12` file, no token), just press Enter. |
+| *"Iniciar o PJeOffice Pro automaticamente ao ligar o computador?"* (start PJeOffice automatically at boot?) | `s` if you use PJe every day (so you never forget to open it before logging in); `n` or just Enter if you prefer to start it by hand. |
 
 ---
 
@@ -143,7 +167,8 @@ After installing, open **Chrome** and do this configuration **just once**:
 **Want to check without opening a real case file?**
 **[TESTE-RAPIDO.md](TESTE-RAPIDO.md)** (in Portuguese) walks through a 4-command
 check that tells you, in about a minute, whether the reader, the token, the
-middleware and PJeOffice are all up — and what to do when each one fails.
+*middleware* (the program that bridges the token and the computer) and PJeOffice
+are all up — and what to do when each one fails. That guide is in Portuguese only.
 
 ---
 
@@ -181,7 +206,7 @@ See [DICAS.md](DICAS.md) (Portuguese) to learn:
 
 ## Arch Linux / Omarchy
 
-If you're on **Arch Linux, Omarchy, EndeavourOS, Manjaro, or CachyOS**, there's a separate installer: `instalar-arch.sh`. It uses the **AUR** (Arch User Repository) instead of manually downloading `.deb`/zip files.
+If you're on **Arch Linux, Omarchy, EndeavourOS, Manjaro, or CachyOS**, there's a separate installer: `instalar-arch.sh`. It uses the **AUR** (Arch User Repository) instead of manually downloading `.deb`/zip files — the AUR is *a software repository maintained by the community, outside the distribution's official catalogue*.
 
 ### Prerequisites
 
@@ -203,7 +228,7 @@ cd /tmp/yay && makepkg -si
 git clone https://github.com/vitorcanoas/pje-no-linux.git && cd pje-no-linux && bash instalar-arch.sh
 ```
 
-The script detects your AUR helper (`yay` or `paru`), shows a summary of what it will install, and asks for confirmation before compiling anything. During installation, the AUR helper shows the **PKGBUILD** for each proprietary package before building it — it's worth reading.
+The script detects your AUR helper (`yay` or `paru`), shows a summary of what it will install, and asks for confirmation before compiling anything. During installation, the AUR helper shows the **PKGBUILD** for each proprietary package before building it — the PKGBUILD is *the recipe, in plain text, showing what will be installed*. It's worth reading.
 
 ### Uninstall
 
@@ -211,7 +236,7 @@ The script detects your AUR helper (`yay` or `paru`), shows a summary of what it
 bash desinstalar-arch.sh
 ```
 
-Removes the AUR packages, config files, shortcuts, and Native Messaging Hosts. It asks separately before removing generic infrastructure packages (`pcsclite`, `ccid`, `opensc`, `p11-kit`) and personal data in `~/.pjeoffice-pro/`, since other programs on the machine may depend on them.
+Removes the AUR packages, config files, shortcuts, and Native Messaging Hosts (*the component that connects the Chrome extension to the signing tool installed on the computer*). It asks separately before removing generic infrastructure packages (`pcsclite`, `ccid`, `opensc`, `p11-kit`) and personal data in `~/.pjeoffice-pro/`, since other programs on the machine may depend on them.
 
 ### Debian ↔ Arch equivalence table
 
@@ -224,7 +249,30 @@ Removes the AUR packages, config files, shortcuts, and Native Messaging Hosts. I
 | Base PKCS#11 | libs via apt | `pcsclite`, `ccid`, `opensc`, `p11-kit` (official repository) |
 | Shodo (Labor Court) | not covered | `shodo` (AUR, optional) |
 
-Data measured on 09/09/2026 via the AUR API.
+Data measured on 09/09/2026 via the AUR API. **PKCS#11** is *the standard the
+token uses to talk to programs* — the four packages on that row are the common
+base every signing tool depends on.
+
+> **Have this answer ready before running the script:** it asks
+> *"Instalar também o Shodo (assinador da Justiça do Trabalho, para TRT)?"*
+> (install Shodo too, the Labor Court signing tool?). **If you practise before the
+> Labor Courts (TRT)**, answer **`s`**. If you only work with TJ/TRF courts,
+> answer **`n`** or just press Enter.
+>
+> The other `instalar-arch.sh` questions are the ones listed under
+> [What the installer will ask you](#what-the-installer-will-ask-you):
+> confirming the summary, plugging in the token so the model can be detected, and
+> PJeOffice autostart. If the token model can't be identified with certainty, the
+> script also offers **[1] don't install SAC now / [2] LEGACY version (older
+> 5100, JC, PRO tokens) / [3] MODERN version (5110, 5300, IDPrime)** — when in
+> doubt pick **[1]**, plug the token in and run again; installing the wrong
+> package on an older token removes the driver it depends on.
+>
+> The **uninstaller** (`desinstalar-arch.sh`) asks too: besides the general
+> confirmation, it asks separately whether to remove the infrastructure packages
+> (`pcsclite`, `ccid`, `opensc`, `p11-kit`) and whether to delete
+> `~/.pjeoffice-pro/`. For both, **`n` is the safe answer** — other programs may
+> depend on the former, and the latter holds your own data.
 
 On Arch there's no manual download with a pinned SHA256 check like in `instalar.sh`: the AUR already packages each component, and integrity checking becomes the **PKGBUILD review** that the helper (`yay`/`paru`) shows before building.
 
@@ -335,6 +383,45 @@ The rest of this repository assumes **GNOME** (shortcuts via `gsettings`, GNOME-
 
 ---
 
+## Frequently asked questions
+
+**"Does it work with my Certisign / Serasa / Valid / Soluti certificate?"**
+Most likely yes. What decides is not the Certificate Authority that issued the
+certificate, but the **model of the token or card reader** you hold in your hand —
+the same CA sells tokens from different manufacturers. The script detects the
+model and tells you which driver to use. The matrix covers SafeNet/Thales/Aladdin,
+Feitian, GD Burti, Watchdata, Oberthur/Idemia/Morpho and smartcard readers. If
+your model isn't mapped, the script tries every installed module and reports what
+it found, instead of guessing.
+
+**"What if I have more than one certificate on the token?"**
+That's normal — it happens with every renewal. The browser asks which one to use,
+and only the valid one works. The details (and how to list them all with their
+real validity dates) are in
+[I have SEVERAL certificates on the token. Is that normal?](#i-have-several-certificates-on-the-token-is-that-normal).
+
+**"Will this erase my Windows?"**
+No. This project installs programs inside the Linux you are already running. It
+**does not touch disk partitions or the bootloader** — if you dual-boot, Windows
+stays exactly where it was. (In fact, [TESTE-RAPIDO.md](TESTE-RAPIDO.md) suggests
+booting into Windows as an emergency plan B, precisely because it is still there.)
+
+**"Can I use Firefox?"**
+You can, but not as your main browser. The Web Signer package registers the
+native component for Firefox as well (it installs into
+`/usr/lib/mozilla/native-messaging-hosts/`), so signing may work there. But
+**e-SAJ and PJe are certified for Chrome** — when something fails, the court's
+first question will be which browser you used. Treat Firefox as a fallback, not
+as your main browser.
+
+**"Do I need PJeOffice for e-SAJ?"**
+No. **e-SAJ uses Web Signer** (the Chrome extension plus the native component).
+**PJeOffice Pro is for PJe** — the Labor Courts (TRT) and the other courts on
+that platform. If you only work in TJSP's e-SAJ, PJeOffice doesn't need to be
+running.
+
+---
+
 ## About the author
 
 I'm **Vitor**, a lawyer for over 10 years, passionate about technology and currently learning to code — because apparently law alone isn't complicated enough.
@@ -403,8 +490,8 @@ bash desinstalar-arch.sh
 ```
 
 Removes all packages, config files, shortcuts, and reverts the screenshot
-keyboard shortcut. The Arch version also removes the polkit rule
-`/etc/polkit-1/rules.d/50-pcscd-pje.rules` created by the installer. Both are
+keyboard shortcut. The Arch version also removes the polkit (*a system permission
+rule*) file `/etc/polkit-1/rules.d/50-pcscd-pje.rules` created by the installer. Both are
 interactive and confirm before removing anything.
 
 ### Components and current versions
