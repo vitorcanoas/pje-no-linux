@@ -12,6 +12,11 @@ set -euo pipefail
 # =============================================================================
 
 # === CONFIGURAÇÃO — edite aqui para atualizar versões ===
+# Versão deste instalador (SemVer). Impressa no cabeçalho e gravada no log,
+# para que meses depois se saiba qual versão produziu aquela instalação.
+# Ao mudar versão/hash de componente proprietário, registre em CHANGELOG.md.
+readonly PJE_LINUX_VERSION="1.0.0"
+
 readonly SAC_VERSION="10.8.1050"
 readonly SAFESIGN_VERSION="4.6.0.0"
 readonly PJEOFFICE_VERSION="v2.5.16u"
@@ -20,6 +25,18 @@ readonly WEBSIGNER_VERSION="2.12.1"
 # Localização do script (necessário para acessar assets/icons/)
 SCRIPT_DIR="$(CDPATH="" cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly SCRIPT_DIR
+
+# Módulo de detecção de distribuição (guard-rail cruzado com instalar-arch.sh).
+# Compartilhado por 'source' em vez de duplicado nos dois instaladores.
+DETECTAR_DISTRO_LIB="${SCRIPT_DIR}/lib/detectar-distro.sh"
+if [[ -r "$DETECTAR_DISTRO_LIB" ]]; then
+    # shellcheck source=lib/detectar-distro.sh
+    source "$DETECTAR_DISTRO_LIB"
+fi
+readonly DETECTAR_DISTRO_LIB
+
+# Pula apenas a confirmação inicial deste script (flag --yes).
+ASSUME_YES=false
 
 # URLs — construídas a partir das variáveis de versão acima
 # Chrome: instalado via repositório apt oficial (GPG verificado pelo apt automaticamente)
@@ -44,10 +61,21 @@ readonly ANTIGRAVITY_SNAP="antigravity"
 readonly ANTIGRAVITY_HASH="ba16cb265fb823c8b738680e1497dfeb7990d4951566beb828d5b3547564f28b"
 
 # Log — captura toda saída (inclusive tela de consentimento)
+# --help ANTES do log: quem só quer ler a ajuda não deve deixar arquivo de log
+# no $HOME. A ajuda completa é impressa no fim, já com as variáveis definidas.
+PEDIU_AJUDA=false
+for _arg in "$@"; do
+    [[ "$_arg" == "-h" || "$_arg" == "--help" ]] && PEDIU_AJUDA=true
+done
+unset _arg
+readonly PEDIU_AJUDA
+
 LOG_FILE="$HOME/pje-install-$(date +%Y%m%d-%H%M%S).log"
 readonly LOG_FILE
-touch "$LOG_FILE" && chmod 600 "$LOG_FILE"
-exec > >(tee -a "$LOG_FILE") 2>&1
+if ! $PEDIU_AJUDA; then
+    touch "$LOG_FILE" && chmod 600 "$LOG_FILE"
+    exec > >(tee -a "$LOG_FILE") 2>&1
+fi
 
 # Cores
 readonly RED='\033[0;31m'
@@ -152,6 +180,19 @@ install_snap_or_deb() {
 
 check_environment() {
     log_info "Verificando ambiente..."
+
+    # Guard-rail cruzado com instalar-arch.sh. Vem PRIMEIRO porque o teste de
+    # arquitetura logo abaixo chama 'dpkg', que não existe no Arch — quem
+    # rodou o script errado receberia "dpkg: command not found" em vez da
+    # instrução de qual script rodar.
+    if declare -F detectar_distro &>/dev/null; then
+        detectar_distro
+        exigir_familia debian "instalar-arch.sh"
+    elif ! command -v apt-get &>/dev/null; then
+        log_error "'apt-get' não encontrado — este script é para Ubuntu, Zorin, Mint e Debian."
+        log_error "  Em Arch, Omarchy, EndeavourOS, Manjaro ou CachyOS use: bash instalar-arch.sh"
+        exit 1
+    fi
 
     local arch
     arch="$(dpkg --print-architecture)"
@@ -258,6 +299,7 @@ show_summary_and_confirm() {
     printf "╔═══════════════════════════════════════════════════════╗\n"
     printf "║       PJe no Linux — Instalador de Componentes        ║\n"
     printf "╚═══════════════════════════════════════════════════════╝${NC}\n\n"
+    printf "  Versão       : pje-no-linux %s (instalar.sh)\n" "$PJE_LINUX_VERSION"
     printf "  SO detectado : %s %s (amd64)\n" "$distro" "$version"
     printf "  Log          : %s\n\n" "$LOG_FILE"
     printf "  Componentes a instalar:\n"
@@ -272,6 +314,14 @@ show_summary_and_confirm() {
     printf "     A instalação implica aceite dos termos de uso de cada fabricante.\n\n"
     printf "  ${YELLOW}*  SafeNet SAC é distribuído via parceiro GlobalSign (não é o site${NC}\n"
     printf "     ${YELLOW}oficial da Thales/SafeNet). O download oficial requer cadastro.${NC}\n\n"
+
+    # --yes pula APENAS esta confirmação. O resumo acima continua sendo
+    # impresso e gravado no log — quem usa --yes abre mão de responder, não de ver.
+    if $ASSUME_YES; then
+        log_info "--yes informado: confirmação inicial dispensada."
+        printf "\n"
+        return 0
+    fi
 
     printf "Deseja continuar? [s/N] "
     local resposta
@@ -760,7 +810,70 @@ show_final_status() {
 # PONTO DE ENTRADA
 # =============================================================================
 
+mostrar_ajuda() {
+    cat <<AJUDA
+PJe no Linux — instalador para Ubuntu, Zorin OS, Linux Mint e Debian
+(versão ${PJE_LINUX_VERSION})
+
+USO
+    bash instalar.sh [opções]
+
+O QUE ELE FAZ
+    Deixa o processo eletrônico (PJe, e-SAJ, Projudi) funcionando: instala o
+    middleware do token, o PJeOffice Pro, o Web Signer e o Chrome, e configura
+    o Native Messaging Host do Web Signer.
+
+O QUE ELE INSTALA
+    Google Chrome stable            repositório apt oficial (GPG pelo apt)
+    SafeNet SAC ${SAC_VERSION}          [PROPRIETÁRIO] via GlobalSign
+    SafeSign IC ${SAFESIGN_VERSION}          [PROPRIETÁRIO] aeteurope.com
+    PJeOffice Pro ${PJEOFFICE_VERSION}       pje.jus.br (CNJ oficial)
+    Web Signer ${WEBSIGNER_VERSION}             [PROPRIETÁRIO] Softplan
+    Antigravity IDE                 antigravity.google
+    Microsoft 365 PWA               Word, Excel, PowerPoint, Outlook
+
+    Cada download é conferido contra um SHA256 commitado neste repositório.
+
+OPÇÕES
+    -y, --yes     Pula a confirmação inicial deste script. O resumo do que
+                  será instalado continua sendo mostrado e gravado no log.
+    -h, --help    Mostra esta ajuda e sai, sem instalar nada.
+
+DESINSTALAR
+    bash desinstalar.sh
+
+USA ARCH, OMARCHY, ENDEAVOUROS, MANJARO OU CACHYOS?
+    Rode: bash instalar-arch.sh
+
+PIN DO CERTIFICADO
+    Nenhum script deste repositório pede, lê, grava ou registra o seu PIN.
+
+LOG
+    ~/pje-install-AAAAMMDD-HHMMSS.log (permissão 600; inclui a versão do
+    instalador que rodou).
+
+Mudanças entre versões: CHANGELOG.md · Guia completo: docs/ubuntu/README.md
+AJUDA
+}
+
+parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -h|--help)  mostrar_ajuda; exit 0 ;;
+            -y|--yes)   ASSUME_YES=true; shift ;;
+            *)
+                log_error "Opção desconhecida: $1"
+                log_error "  Ação: bash instalar.sh --help"
+                exit 1
+                ;;
+        esac
+    done
+}
+
 main() {
+    parse_args "$@"
+    log_info "pje-no-linux versão ${PJE_LINUX_VERSION} — instalar.sh"
+
     # Detecção e consentimento ANTES de qualquer alocação de recursos
     check_environment
     check_dependencies
