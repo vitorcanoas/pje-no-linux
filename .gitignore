@@ -1,0 +1,67 @@
+# =============================================================================
+# .gitignore — PJe no Linux
+#
+# Objetivo: impedir que dado de certificado digital ou log de instalação
+# entrem no repositório. Este projeto lida com certificado A3 de advogado,
+# que assina petição com fé pública — um arquivo vazado aqui é grave.
+#
+# Nota: o .gitignore NÃO remove o que já foi commitado. Se algo sensível
+# já estiver no histórico, é preciso reescrever o histórico (git filter-repo)
+# e trocar o que vazou.
+# =============================================================================
+
+# --- Certificados e chaves — NUNCA versionar ---
+# A1 é um arquivo; A3 fica no token, mas exportações e backups viram arquivo.
+*.pfx
+*.p12
+*.pem
+*.key
+*.crt
+*.cer
+*.der
+*.jks
+*.keystore
+*.p7b
+*.p7s
+
+# --- Logs de instalação ---
+# O instalador grava ~/pje-install-*.log, mas se o usuário rodar de dentro
+# do repo ou copiar o log para cá, ele não pode ser commitado: contém o
+# nome do leitor e o ATR do chip (identificador persistente do token).
+pje-install*.log
+*.log
+
+# --- Segredos e configuração local ---
+# O PIN do certificado nunca deve ser gravado em arquivo (ver README,
+# "Segurança do certificado"). Estes padrões são rede de segurança.
+.env
+.env.*
+!.env.example
+secrets.*
+*credentials*
+*senha*
+*.secret
+
+# --- Downloads dos instaladores (proprietários, não redistribuíveis) ---
+*.deb
+*.rpm
+*.zip
+*.iso
+*.tar.gz
+*.tar.xz
+*.pkg.tar.zst
+
+# --- Temporários de build e editor ---
+*.bak
+*.bak.*
+*.tmp
+*.swp
+*~
+.DS_Store
+/tmp/
+/build/
+
+# --- Diretórios de trabalho do AUR/makepkg, se alguém compilar aqui ---
+pkg/
+src/
+*.pkg.tar.*

@@ -4,7 +4,22 @@
 
 ---
 
-## Instalação — copie, cole e pressione Enter
+## Qual script eu rodo?
+
+Este repositório cobre **duas famílias de distribuição**, cada uma com seu instalador:
+
+| Sua distro | Rode |
+|---|---|
+| Ubuntu, Zorin OS, Linux Mint, Debian | `bash instalar.sh` |
+| Arch Linux, **Omarchy**, EndeavourOS, Manjaro, CachyOS | `bash instalar-arch.sh` |
+
+Se não sabe qual é a sua, rode `cat /etc/os-release` no Terminal — o campo `ID` ou `ID_LIKE` mostra a família.
+
+O restante desta seção e o passo a passo abaixo são para **Ubuntu/Zorin/Mint/Debian**. Para Arch/Omarchy, pule direto para a seção [Arch Linux / Omarchy](#arch-linux--omarchy).
+
+---
+
+## Instalação (Ubuntu/Zorin/Mint/Debian) — copie, cole e pressione Enter
 
 ```bash
 git clone https://github.com/vitorcanoas/pje-no-linux.git && cd pje-no-linux && bash instalar.sh
@@ -132,6 +147,11 @@ Depois de instalar, abra o **Chrome** e faça essa configuração **uma única v
 
 ![eSAJ com certificado funcionando](assets/screenshots/04-esaj.png)
 
+**Quer conferir sem abrir um processo de verdade?** O
+**[TESTE-RAPIDO.md](TESTE-RAPIDO.md)** traz uma checagem de 4 comandos que diz,
+em um minuto, se o leitor, o token, o middleware e o PJeOffice estão de pé — e o
+que fazer quando cada um falha.
+
 ---
 
 ## Algo deu errado?
@@ -143,6 +163,13 @@ Não entre em pânico. O instalador grava um log completo com tudo que aconteceu
 ```
 
 Envie esse arquivo para o suporte e ele terá tudo que precisa para te ajudar.
+
+> ⚠️ **Antes de anexar o log em um lugar público** (issue no GitHub, fórum,
+> grupo de WhatsApp): ele registra o **ATR do chip** do seu token — um
+> identificador fixo do seu dispositivo — além do nome de usuário e caminhos da
+> sua máquina. O log **nunca contém o PIN nem a chave privada**, mas o ATR
+> permite correlacionar registros. Revise o arquivo antes de publicá-lo, ou
+> envie-o apenas em canal privado de suporte.
 
 ---
 
@@ -156,6 +183,125 @@ Consulte o [DICAS.md](DICAS.md) para aprender:
 - Como imprimir para PDF
 - Como recuperar arquivos deletados
 - Como usar o token digital
+
+---
+
+## Arch Linux / Omarchy
+
+Se você usa **Arch Linux, Omarchy, EndeavourOS, Manjaro ou CachyOS**, o instalador é outro: `instalar-arch.sh`. Ele usa o **AUR** (Arch User Repository) em vez de baixar `.deb`/zip manualmente.
+
+### Pré-requisitos
+
+- Arquitetura `x86_64`
+- Grupo **`base-devel`** (compilador e ferramentas de build, necessário para compilar pacotes do AUR)
+- Um **helper AUR**: `yay` ou `paru`
+
+Se você ainda não tem `yay` instalado:
+
+```bash
+sudo pacman -S --needed git base-devel
+git clone https://aur.archlinux.org/yay.git /tmp/yay
+cd /tmp/yay && makepkg -si
+```
+
+### Instalar
+
+```bash
+git clone https://github.com/vitorcanoas/pje-no-linux.git && cd pje-no-linux && bash instalar-arch.sh
+```
+
+O script detecta o helper AUR (`yay` ou `paru`), mostra um resumo do que vai instalar e pede confirmação antes de compilar qualquer coisa. Durante a instalação, o helper AUR exibe o **PKGBUILD** de cada pacote proprietário antes de compilar — vale a pena ler.
+
+### Desinstalar
+
+```bash
+bash desinstalar-arch.sh
+```
+
+Remove os pacotes do AUR, configurações, atalhos e Native Messaging Hosts. Pergunta separadamente antes de remover pacotes de infraestrutura genérica (`pcsclite`, `ccid`, `opensc`, `p11-kit`) e dados pessoais em `~/.pjeoffice-pro/`, já que outros programas na máquina podem depender deles.
+
+### Tabela de equivalência Debian ↔ Arch
+
+| Componente | Ubuntu/Debian | Arch (AUR) |
+|---|---|---|
+| PJeOffice Pro | zip portátil v2.5.16u → `/opt` | `pje-office 2.5.16u-8` |
+| Web Signer | `.deb` 2.12.1 | `softplan-websigner 2.15.0.1-2` |
+| SafeNet SAC | zip 10.8.1050 (via GlobalSign) | `sac-core` + `sac-gui 10.9.6885-1` |
+| Google Chrome | repo apt + chave GPG | `google-chrome` (AUR) |
+| Base PKCS#11 | libs via apt | `pcsclite`, `ccid`, `opensc`, `p11-kit` (repositório oficial) |
+| Shodo (Justiça do Trabalho) | não coberto | `shodo` (AUR, opcional) |
+
+Dados medidos em 09/09/2026 via API do AUR.
+
+No Arch não existe download manual com conferência de SHA256 fixo como no `instalar.sh`: o AUR já empacota cada componente, e a conferência de integridade passa a ser a **revisão do PKGBUILD** que o helper (`yay`/`paru`) mostra antes de compilar.
+
+### Segurança do certificado
+
+O `instalar-arch.sh` **nunca pede nem grava o PIN** do seu certificado A3 — nem em script, nem em arquivo de configuração, nem em variável de ambiente.
+
+O motivo é concreto: no padrão PKCS#11 (o protocolo que o token usa), *autenticar* e *assinar* rodam na **mesma sessão**, destravada pelo **mesmo PIN** — a diferença entre as duas operações é só uma flag de uso da chave. Ou seja: quem tem o seu PIN e o token plugado consegue assinar uma petição em seu nome, com fé pública. Por isso o PIN não pode circular fora da hora do uso.
+
+A validação de token que o script faz (`pkcs11-tool --list-slots` e `pkcs11-tool --list-objects --type cert`) lê **apenas objetos públicos** do token — não pede PIN e não desbloqueia a chave privada. O PIN só deve ser digitado pelo titular, na hora, na janela do próprio assinador (PJeOffice, Web Signer etc).
+
+### Seu certificado é A1 ou A3? (a diferença muda tudo)
+
+Antes de brigar com token, leitor e driver, confira **qual dos dois** você tem —
+metade dos problemas relatados é gente com A1 tentando resolver problema de A3.
+
+| | **A1** | **A3** |
+|---|---|---|
+| O que é | Um **arquivo** (`.pfx` ou `.p12`) | Um **token USB** ou cartão + leitora |
+| Onde fica | No disco do computador | Dentro do chip, e não sai de lá |
+| Validade típica | 1 ano | 3 anos |
+| Precisa de driver? | **Não** | **Sim** (middleware PKCS#11) |
+
+**Se o seu certificado é A1**, não há token para conectar, e **nada nesta
+seção de Arch/Omarchy se aplica a você**: não instale SafeNet SAC, não se
+preocupe com `pcscd`, leitora ou `libeToken.so`. O A1 é importado direto:
+
+- **No PJeOffice Pro**: abra o PJeOffice, vá em *Certificados* → *Importar*, e
+  escolha o seu arquivo `.pfx`/`.p12`.
+- **No Chrome**: `chrome://settings/certificates` → aba *Seus certificados* →
+  **Importar** → selecione o `.pfx`/`.p12` e digite a senha do arquivo.
+
+Guarde o arquivo A1 com cuidado: quem tem o arquivo **e** a senha dele assina
+em seu nome, com fé pública. Não o deixe em pasta sincronizada com a nuvem nem
+o envie por e-mail ou WhatsApp.
+
+**Se o seu certificado é A3** (token USB — o caso mais comum na advocacia),
+siga normalmente esta seção. O diagnóstico
+`bash lib/detectar-certificado.sh` identifica o modelo do seu token e diz
+exatamente qual pacote instalar.
+
+### Ambiente gráfico: GNOME vs. Hyprland
+
+O restante deste repositório assume **GNOME** (atalhos via `gsettings`, autostart no formato GNOME). O Omarchy usa **Hyprland/Wayland**, que é diferente:
+
+- **Autostart do PJeOffice**: o `instalar-arch.sh` grava um `.desktop` em `~/.config/autostart/`, que é o padrão **XDG autostart** — o Hyprland também lê esse diretório, então funciona sem configuração extra (confirmado: `xdg-desktop-autostart.target` fica `active` no Omarchy). Se por algum motivo não disparar e você estiver no Omarchy, a forma idiomática **não** é `exec-once` no `hyprland.conf` (a config do Hyprland no Omarchy é em Lua) — é adicionar ao `~/.config/hypr/autostart.lua`:
+  ```lua
+  o.launch_on_start("/caminho/para/pjeoffice-pro")
+  ```
+- **Atalho de captura de tela**: o `instalar.sh` configura `Super+Shift+S` via `gsettings` (GNOME). Isso **não se aplica ao Omarchy**, que já vem com seu próprio atalho de screenshot configurado — o `instalar-arch.sh` não mexe nisso.
+
+### Passo manual: extensão Web Signer no Chrome
+
+O `instalar-arch.sh` instala o Chrome e o pacote nativo do Web Signer, mas **não instala a extensão do navegador** — isso precisa ser feito manualmente, uma vez:
+
+1. Abra o Chrome e acesse: https://chromewebstore.google.com/detail/web-signer/bbafmabaelnnkondpfpjmdklbmfnbmol
+2. Clique em **Usar no Chrome**
+3. Depois, siga o [Passo 6](#passo-6--configurar-o-web-signer-uma-vez-só) deste README para configurar o "Nome do arquivo SO" (`libeToken.so`)
+
+> **Errata (09/2026):** versões anteriores deste repositório indicavam o ID
+> `dcngeagmmhegagicpcmpinaoklddcgon`. Esse ID **não é o Web Signer** — é a
+> extensão *Web PKI*, da Lacuna Software, um produto diferente que **não**
+> conversa com o assinador da Softplan. Se você instalou aquela extensão e o
+> certificado nunca aparecia no e-SAJ/PJe, era essa a causa: **desinstale-a** e
+> instale a do link acima.
+>
+> A prova do ID correto é o próprio pacote oficial da Softplan: o
+> `manifest.json` do Native Messaging Host declara
+> `"allowed_origins": ["chrome-extension://bbafmabaelnnkondpfpjmdklbmfnbmol/"]`
+> — ou seja, esse é o único ID que o componente nativo aceita.
 
 ---
 
@@ -173,20 +319,37 @@ Se eu consegui, você também consegue.
 
 ## Para o Advogado Curioso (que gosta de tecnologia)
 
+> Esta seção detalha o instalador **Ubuntu/Debian** (`instalar.sh`). Para os detalhes do instalador Arch (`instalar-arch.sh`), veja a seção [Arch Linux / Omarchy](#arch-linux--omarchy) acima.
+
 ### Estrutura do projeto
 
 ```
-instalar.sh          # Script principal — instala todos os componentes
-desinstalar.sh       # Remove tudo que o instalar.sh instalou
-checksums.sha256     # Hashes SHA256 dos binários (para auditoria)
-DICAS.md             # Guia de uso para advogados migrando do Windows
+instalar.sh              # Script principal (Ubuntu/Debian) — instala todos os componentes
+desinstalar.sh           # Remove tudo que o instalar.sh instalou
+instalar-arch.sh         # Script principal (Arch/Omarchy) — instala via AUR
+desinstalar-arch.sh      # Remove tudo que o instalar-arch.sh instalou
+lib/
+  detectar-certificado.sh  # Diagnóstico do token A3: identifica o modelo pelo ATR
+                           # e diz qual middleware instalar. Nunca pede PIN.
+                           # Pode ser rodado sozinho: bash lib/detectar-certificado.sh
+TESTE-RAPIDO.md          # Como testar se a instalação funcionou, sem abrir processo
+DICAS.md                 # Guia de uso para advogados migrando do Windows
+atualizar-hashes.sh      # [SÓ Debian/Ubuntu] Recalcula os hashes do instalar.sh
+checksums.sha256         # [SÓ Debian/Ubuntu] Hashes SHA256 dos binários baixados
 assets/
-  icons/             # Ícones PNG 128×128 para os PWAs do Microsoft 365
-  screenshots/       # Capturas de tela ilustrativas do README
-  dicas/             # Imagens do guia DICAS.md
+  icons/               # Ícones PNG 128×128 para os PWAs do Microsoft 365
+                       # (não versionados — os atalhos caem no ícone do Chrome)
+  screenshots/         # Capturas de tela ilustrativas do README
+  dicas/               # Imagens do guia DICAS.md
 ```
 
 ### Segurança
+
+> **Nota:** `checksums.sha256` e `atualizar-hashes.sh` pertencem **exclusivamente
+> ao fluxo Debian/Ubuntu** (`instalar.sh`), que baixa binários direto do
+> fornecedor. No Arch/Omarchy não há download manual: os pacotes vêm do AUR e a
+> verificação de integridade é feita pelo PKGBUILD de cada pacote, que o helper
+> (`yay`/`paru`) mostra para você revisar antes de compilar.
 
 Cada binário baixado é verificado com **SHA256** antes de ser instalado. Se o hash não bater, a instalação aborta. Os hashes ficam no bloco `CONFIG` no topo do `instalar.sh` e devem ser atualizados pelo mantenedor ao mudar versões.
 
@@ -196,11 +359,22 @@ sha256sum nome-do-arquivo.deb
 
 ### Como desinstalar
 
+**Ubuntu / Zorin / Mint / Debian:**
+
 ```bash
 bash desinstalar.sh
 ```
 
-Remove todos os pacotes, arquivos de configuração, atalhos e reverte o atalho de captura de tela.
+**Arch Linux / Omarchy:**
+
+```bash
+bash desinstalar-arch.sh
+```
+
+Remove todos os pacotes, arquivos de configuração, atalhos e reverte o atalho de
+captura de tela. A versão Arch remove também a regra polkit
+`/etc/polkit-1/rules.d/50-pcscd-pje.rules` criada pelo instalador. Os dois são
+interativos e confirmam antes de remover qualquer coisa.
 
 ### Componentes e versões atuais
 
