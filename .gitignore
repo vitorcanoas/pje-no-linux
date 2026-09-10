@@ -39,7 +39,15 @@ pje-install*.log
 !.env.example
 secrets.*
 *credentials*
-*senha*
+# '*senha*' cru era armadilha: engolia calado qualquer screenshot novo com
+# "senha" no nome (assets/**/02b-senha-terminal.png só escapa por já estar
+# tracked). Restringido às extensões em que um segredo de verdade moraria.
+*senha*.txt
+*senha*.env
+*senha*.json
+*senha*.yaml
+*senha*.yml
+*senha*.conf
 *.secret
 
 # --- Downloads dos instaladores (proprietários, não redistribuíveis) ---

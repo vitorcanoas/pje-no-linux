@@ -8,14 +8,16 @@
 
 This repository covers **two distro families**, each with its own installer:
 
-| Your distro | Run |
-|---|---|
-| Ubuntu, Zorin OS, Linux Mint, Debian | `bash instalar.sh` |
-| Arch Linux, **Omarchy**, EndeavourOS, Manjaro, CachyOS | `bash instalar-arch.sh` |
+| Your distro | Run | Full guide |
+|---|---|---|
+| Ubuntu, Zorin OS, Linux Mint, Debian | `bash instalar.sh` | [docs/ubuntu/](docs/ubuntu/README.md) (pt-BR) |
+| Arch Linux, **Omarchy**, EndeavourOS, Manjaro, CachyOS | `bash instalar-arch.sh` | [docs/arch/](docs/arch/README.md) (pt-BR) |
 
-Not sure which one you have? Run `cat /etc/os-release` in the Terminal — the `ID` or `ID_LIKE` field shows the family.
+Not sure which one you have? Run `cat /etc/os-release` in the Terminal — the `ID` or `ID_LIKE` field shows the family. **Ran the wrong one? The script tells you which one is right — nothing breaks.**
 
-The rest of this section and the step-by-step guide below are for **Ubuntu/Zorin/Mint/Debian**. For Arch/Omarchy, skip straight to the [Arch Linux / Omarchy](#arch-linux--omarchy) section.
+Each guide above is the full step-by-step for that path, including a **Validação** (Validation) section with commands you run yourself to confirm the install worked. The guides are kept in Brazilian Portuguese only — the target audience is Brazilian lawyers, and this English README stays complete on its own rather than duplicating them. The step-by-step below is for **Ubuntu/Zorin/Mint/Debian**; for Arch/Omarchy, skip straight to the [Arch Linux / Omarchy](#arch-linux--omarchy) section.
+
+Changes between versions — including any version or hash change of the proprietary components — are recorded in **[CHANGELOG.md](CHANGELOG.md)**.
 
 ---
 
@@ -233,6 +235,42 @@ On Arch there's no manual download with a pinned SHA256 check like in `instalar.
 The reason is concrete: in the PKCS#11 standard (the protocol the token uses), *authenticating* and *signing* run in the **same session**, unlocked by the **same PIN** — the difference between the two operations is just a key-usage flag. In other words, whoever has your PIN and the token plugged in can sign a legal filing in your name, with full legal effect. That's why the PIN must never circulate outside the moment it's used.
 
 The token check the script runs (`pkcs11-tool --list-slots` and `pkcs11-tool --list-objects --type cert`) only reads **public objects** on the token — it doesn't ask for the PIN and doesn't unlock the private key. The PIN should only ever be typed by the certificate holder, at the moment of use, in the signing tool's own window (PJeOffice, Web Signer, etc.).
+
+### I have SEVERAL certificates on the token. Is that normal?
+
+**Yes, it is.** Every time you **renew** your certificate, the Certificate
+Authority writes a **new one** onto the token — and the **old one stays there**.
+A lawyer who has renewed twice typically has three certificates on the same
+token, all bearing the same name.
+
+Only the **valid** one works. The expired ones don't disappear on their own and
+do no harm, but they cause two classic mix-ups:
+
+1. **In the browser**, when picking a certificate, several show up with the same
+   name. Pick an expired one and PJe/e-SAJ refuses the login — usually
+   **without saying why**.
+2. **Checking from the terminal**, anyone who looks only at the first entry
+   concludes the certificate has expired and renews it needlessly. The listing
+   order is **not** chronological.
+
+To see them all, with each one's real validity period:
+
+```bash
+bash lib/detectar-certificado.sh
+```
+
+The output marks `✔ VÁLIDO` on the one currently in force and `✘ vencido` on the
+rest — and skips the ICP-Brasil chain certificates (Root, ITI, AC), which live on
+the token but are **not** your signing certificate. The command **never asks for
+a PIN**: it reads public objects only.
+
+> The dates shown in the certificate's *name* are just free text written by the
+> CA. The script doesn't trust them: it reads the `notBefore`/`notAfter` fields
+> from inside the certificate itself, which is the validity PJe actually checks.
+
+If **none** shows up as valid, then the certificate really has expired: you must
+**renew it with your Certificate Authority**. No configuration in this repository
+can work around that.
 
 ### Is your certificate A1 or A3? (the difference changes everything)
 

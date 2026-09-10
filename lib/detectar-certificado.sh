@@ -606,6 +606,180 @@ detectar_certificado() {
     return 1
 }
 
+# =============================================================================
+# ETAPA 6 — INVENTÁRIO DOS CERTIFICADOS DO TOKEN
+# =============================================================================
+# Um token de advogado costuma guardar VÁRIOS certificados do mesmo titular:
+# cada renovação grava um novo e o anterior FICA no chip. [LIVE] No token de
+# teste havia 6 objetos — 3 do titular (2019~2022, 2022~2025, 2025~2028) e 3 da
+# cadeia ICP-Brasil (Raiz v5, ITI, AC OAB).
+#
+# Consequência prática: quem pegar "o primeiro certificado da lista" pega um
+# VENCIDO — e o sintoma no e-SAJ/PJe é login recusado sem explicação. Por isso
+# aqui enumeramos TODOS e classificamos cada um.
+#
+# NADA nesta etapa pede, lê ou usa o PIN. '--list-objects' e '--read-object'
+# leem apenas objetos PÚBLICOS do token; a chave privada nunca é tocada.
+# [LIVE] Confirmado com stdin fechado (</dev/null): o comando conclui com
+# sucesso — se houvesse prompt de PIN, falharia.
+
+# Datas do label NÃO são fonte de verdade: o label é texto livre gravado pela
+# AC. A validade real vem dos campos notBefore/notAfter do X.509.
+
+# Vetor de resultados. Um registro por certificado DE TITULAR, no formato:
+#   id<TAB>CN<TAB>notBefore_epoch<TAB>notAfter_epoch<TAB>situacao
+CERT_LISTA=()
+CERT_NUM_TITULAR=0
+CERT_NUM_VALIDOS=0
+
+# Monta os argumentos de módulo do pkcs11-tool.
+# O opensc puro é usado SEM '--module' (usa o padrão compilado) — passar
+# "--module opensc" seria um caminho de arquivo inválido.
+_pk11_args() {
+    if [[ -n "${CERT_MIDDLEWARE:-}" && "$CERT_MIDDLEWARE" != "opensc" ]]; then
+        printf '%s\n%s\n' "--module" "$CERT_MIDDLEWARE"
+    fi
+}
+
+# Classifica um certificado comparando AGORA com notBefore/notAfter.
+# Não usamos 'openssl -checkend', porque ele só enxerga expiração: um
+# certificado com data de início no FUTURO passaria por válido.
+_classifica_validade() {
+    local nb_epoch="$1" na_epoch="$2" agora
+    agora="$(date -u +%s)"
+    if   (( nb_epoch > 0 && agora < nb_epoch )); then printf 'futuro\n'
+    elif (( na_epoch > 0 && agora > na_epoch )); then printf 'vencido\n'
+    else                                              printf 'valido\n'
+    fi
+}
+
+# Preenche CERT_LISTA. Devolve 0 se achou ao menos um certificado de titular.
+inventariar_certificados() {
+    CERT_LISTA=(); CERT_NUM_TITULAR=0; CERT_NUM_VALIDOS=0
+
+    command -v pkcs11-tool &>/dev/null || return 1
+    command -v openssl     &>/dev/null || {
+        log_warn "openssl ausente — não dá para ler as datas de validade do certificado."
+        return 1
+    }
+
+    local -a mod_args=()
+    mapfile -t mod_args < <(_pk11_args)
+
+    local saida
+    saida="$(timeout 25 pkcs11-tool "${mod_args[@]}" --list-objects --type cert \
+             </dev/null 2>/dev/null || true)"
+    [[ -n "$saida" ]] || return 1
+
+    # Os IDs saem com ':' na listagem ("a4:e6:11:..."), mas '--read-object --id'
+    # espera hex CONTÍNUO. Sem remover os ':' o comando não acha o objeto e
+    # devolve saída vazia — foi exatamente essa a pegadinha medida.
+    local -a ids=()
+    mapfile -t ids < <(printf '%s\n' "$saida" \
+        | awk '/^[[:space:]]*ID:/ { gsub(/:/, "", $2); if ($2 != "") print $2 }')
+
+    (( ${#ids[@]} > 0 )) || return 1
+
+    # Diretório temporário próprio, fora do repo, apagado no fim.
+    # O '-o' do pkcs11-tool exige caminho GRAVÁVEL; apontar para um diretório
+    # inexistente faz o comando terminar sem produzir arquivo nenhum.
+    local tmpdir
+    tmpdir="$(mktemp -d "${TMPDIR:-/tmp}/pjecert.XXXXXX")" || return 1
+
+    local id der bc cn nb na nb_epoch na_epoch situacao
+    for id in "${ids[@]}"; do
+        der="${tmpdir}/${id}.der"
+
+        timeout 25 pkcs11-tool "${mod_args[@]}" --read-object --type cert \
+                --id "$id" -o "$der" </dev/null &>/dev/null || continue
+        [[ -s "$der" ]] || continue
+
+        # Titular x CA: usamos basicConstraints (RFC 5280), que é NORMATIVO e
+        # vale para qualquer AC do mundo. Casar string de 'OU=ADVOGADO' seria
+        # frágil — quebraria para procurador, perito ou certificado e-CPF comum.
+        bc="$(openssl x509 -inform DER -in "$der" -noout -ext basicConstraints 2>/dev/null || true)"
+        [[ "$bc" == *CA:TRUE* ]] && continue
+
+        cn="$(openssl x509 -inform DER -in "$der" -noout -subject \
+                -nameopt RFC2253,sep_multiline 2>/dev/null \
+              | awk -F'=' '/^[[:space:]]*CN=/ { sub(/^[[:space:]]*CN=/, ""); print; exit }')"
+        nb="$(openssl x509 -inform DER -in "$der" -noout -startdate 2>/dev/null | cut -d= -f2-)"
+        na="$(openssl x509 -inform DER -in "$der" -noout -enddate   2>/dev/null | cut -d= -f2-)"
+
+        nb_epoch="$(date -u -d "$nb" +%s 2>/dev/null || printf '0')"
+        na_epoch="$(date -u -d "$na" +%s 2>/dev/null || printf '0')"
+        situacao="$(_classifica_validade "$nb_epoch" "$na_epoch")"
+
+        # NUNCA guardamos o OU= — nele vem o CPF/CNPJ do titular. Este relatório
+        # costuma ir para o $HOME do usuário e daí para um issue público.
+        CERT_LISTA+=( "${id}"$'\t'"${cn}"$'\t'"${nb_epoch}"$'\t'"${na_epoch}"$'\t'"${situacao}" )
+        (( CERT_NUM_TITULAR++ ))
+        [[ "$situacao" == "valido" ]] && (( CERT_NUM_VALIDOS++ ))
+    done
+
+    rm -rf "$tmpdir"
+    (( CERT_NUM_TITULAR > 0 ))
+}
+
+# Formata um epoch como dd/mm/aaaa; '?' quando a data não pôde ser lida.
+_fmt_data() {
+    local epoch="$1"
+    (( epoch > 0 )) && date -u -d "@${epoch}" +%d/%m/%Y 2>/dev/null || printf '?'
+}
+
+# Bloco do relatório que lista os certificados encontrados.
+relatorio_certificados_do_token() {
+    inventariar_certificados || {
+        printf "  Certificados : não foi possível enumerar (token ou openssl indisponível)\n"
+        return 0
+    }
+
+    local registro id cn nb na situacao marca
+    printf "\n  Certificados no token (%d do titular):\n" "$CERT_NUM_TITULAR"
+
+    for registro in "${CERT_LISTA[@]}"; do
+        IFS=$'\t' read -r id cn nb na situacao <<< "$registro"
+        case "$situacao" in
+            valido)  marca="✔ VÁLIDO      " ;;
+            vencido) marca="✘ vencido     " ;;
+            futuro)  marca="… ainda não válido" ;;
+            *)       marca="? indefinido  " ;;
+        esac
+        printf "    %s  %s  (%s a %s)\n" \
+            "$marca" "$cn" "$(_fmt_data "$nb")" "$(_fmt_data "$na")"
+    done
+    printf "\n"
+
+    if (( CERT_NUM_VALIDOS == 1 )); then
+        if (( CERT_NUM_TITULAR > 1 )); then
+            printf "  É NORMAL ter vários: cada renovação grava um novo certificado\n"
+            printf "  no token e o anterior continua lá. Só o marcado VÁLIDO funciona.\n"
+            printf "  Use ESTE no navegador e no PJeOffice.\n"
+        else
+            printf "  Certificado válido ✔ — use este.\n"
+        fi
+    elif (( CERT_NUM_VALIDOS > 1 )); then
+        printf "  Há mais de um certificado válido no token. Isso não é erro:\n"
+        printf "  o navegador vai PERGUNTAR qual usar na hora de assinar.\n"
+        printf "  Escolha o do titular/finalidade correta para o processo.\n"
+    else
+        # Nenhum válido: achado importante. Nenhuma configuração deste script
+        # resolve — é preciso renovar na Autoridade Certificadora.
+        local ultimo=0 registro2 na2
+        for registro2 in "${CERT_LISTA[@]}"; do
+            na2="$(printf '%s' "$registro2" | cut -f4)"
+            (( na2 > ultimo )) && ultimo="$na2"
+        done
+        printf "  ⚠ ATENÇÃO: NENHUM certificado do titular está válido.\n"
+        printf "    O mais recente expirou em %s.\n" "$(_fmt_data "$ultimo")"
+        printf "    Nenhuma configuração de software resolve isto: é preciso\n"
+        printf "    RENOVAR o certificado na sua Autoridade Certificadora\n"
+        printf "    (a mesma que o emitiu — AC OAB, Certisign, Serasa etc.).\n"
+        printf "    Até lá, o login no PJe/e-SAJ será recusado.\n"
+    fi
+    printf "\n"
+}
+
 # Relatório legível — usado no diagnóstico e no fim da instalação
 relatorio_certificado() {
     printf "\n"
@@ -616,6 +790,8 @@ relatorio_certificado() {
             printf "  Modelo       : %s\n" "$CERT_MODELO"
             printf "  Middleware   : %s\n" "$CERT_MIDDLEWARE"
             printf "  Situação     : token legível ✔\n"
+            # Token legível: dá para inventariar os certificados de dentro dele.
+            relatorio_certificados_do_token
             ;;
         sem_middleware)
             printf "  Situação     : token presente, mas sem driver que o leia\n"

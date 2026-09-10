@@ -18,6 +18,11 @@ set -euo pipefail
 # =============================================================================
 
 # === CONFIGURAÇÃO ===
+# Versão deste instalador (SemVer). Impressa no cabeçalho e gravada no log,
+# para que meses depois se saiba qual versão produziu aquela instalação.
+# Ao mudar versão/hash de componente proprietário, registre em CHANGELOG.md.
+readonly PJE_LINUX_VERSION="1.0.0"
+
 # Pacotes do repositório oficial (pacman)
 readonly PACMAN_BASE=(pcsclite ccid opensc p11-kit)
 
@@ -35,15 +40,27 @@ readonly AUR_PJEOFFICE="pje-office"
 readonly AUR_WEBSIGNER="softplan-websigner"
 readonly AUR_SHODO="shodo"
 
+# --help ANTES do log: quem só quer ler a ajuda não deve deixar arquivo de log
+# no $HOME. A ajuda completa (mostrar_ajuda) exige as variáveis de pacote já
+# definidas acima; aqui só marcamos a intenção e desviamos no fim do arquivo.
+PEDIU_AJUDA=false
+for _arg in "$@"; do
+    [[ "$_arg" == "-h" || "$_arg" == "--help" ]] && PEDIU_AJUDA=true
+done
+unset _arg
+readonly PEDIU_AJUDA
+
 # Log — captura toda saída (inclusive tela de consentimento)
 LOG_FILE="$HOME/pje-install-arch-$(date +%Y%m%d-%H%M%S).log"
 readonly LOG_FILE
 # umask ANTES do touch: sem isso o arquivo nasce 644 e existe uma janela em que
 # o log — que contém o ATR do chip, identificador persistente do token — fica
 # legível para todo mundo. O chmod depois só fecha a porta tarde demais.
-( umask 077 && touch "$LOG_FILE" )
-chmod 600 "$LOG_FILE"
-exec > >(tee -a "$LOG_FILE") 2>&1
+if ! $PEDIU_AJUDA; then
+    ( umask 077 && touch "$LOG_FILE" )
+    chmod 600 "$LOG_FILE"
+    exec > >(tee -a "$LOG_FILE") 2>&1
+fi
 
 # Cores
 readonly RED='\033[0;31m'
@@ -72,6 +89,20 @@ else
     DETECTAR_CERT_OK=false
 fi
 readonly DETECTAR_CERT_LIB DETECTAR_CERT_OK
+
+# Módulo de detecção de distribuição (guard-rail cruzado com instalar.sh).
+# Compartilhado por 'source' em vez de duplicado — mesma razão do módulo acima.
+DETECTAR_DISTRO_LIB="${SCRIPT_DIR}/lib/detectar-distro.sh"
+if [[ -r "$DETECTAR_DISTRO_LIB" ]]; then
+    # shellcheck source=lib/detectar-distro.sh
+    source "$DETECTAR_DISTRO_LIB"
+fi
+readonly DETECTAR_DISTRO_LIB
+
+# Pula apenas a confirmação inicial deste script (flag --yes).
+# NUNCA pula a revisão do PKGBUILD do AUR: essa é do helper e é onde o
+# usuário vê o que vai compilar e rodar na máquina dele.
+ASSUME_YES=false
 
 # =============================================================================
 # LOG
@@ -145,7 +176,13 @@ check_environment() {
         exit 1
     fi
 
-    if ! command -v pacman &>/dev/null; then
+    # Guard-rail cruzado: quem rodou o script errado descobre agora, com o
+    # nome da própria distro e o comando certo na tela — não com um erro
+    # genérico de 'pacman: command not found' cinquenta linhas adiante.
+    if declare -F detectar_distro &>/dev/null; then
+        detectar_distro
+        exigir_familia arch "instalar.sh"
+    elif ! command -v pacman &>/dev/null; then
         log_error "'pacman' não encontrado — este script é para Arch Linux e derivados."
         log_error "  Em Ubuntu, Zorin, Mint ou Debian use: bash instalar.sh"
         exit 1
@@ -235,6 +272,7 @@ exigir_terminal_interativo() {
     if [[ -t 0 ]]; then
         return 0
     fi
+    # Sem TTY e sem --yes: não há como obter consentimento. Sai com instrução.
     log_error "Entrada padrão não é um terminal — este instalador é interativo."
     log_error "  Ele precisa perguntar o modelo do seu token e confirmar cada etapa."
     log_error "  Provável causa: execução por 'curl ... | bash' ou dentro de outro script."
@@ -257,6 +295,7 @@ show_summary_and_confirm() {
     printf "╔═══════════════════════════════════════════════════════╗\n"
     printf "║   PJe no Linux — Instalador (Arch Linux / Omarchy)    ║\n"
     printf "╚═══════════════════════════════════════════════════════╝${NC}\n\n"
+    printf "  Versão       : pje-no-linux %s (instalar-arch.sh)\n" "$PJE_LINUX_VERSION"
     printf "  SO detectado : %s (x86_64)\n" "$distro"
     printf "  Helper AUR   : %s\n" "$AUR_HELPER"
     printf "  Log          : %s\n\n" "$LOG_FILE"
@@ -280,6 +319,16 @@ show_summary_and_confirm() {
     printf "     Ela libera a leitura do token (pcsc-lite) para o seu grupo mesmo\n"
     printf "     em sessão não-ativa; sem ela o token \"some\" sem erro visível.\n"
     printf "     Para remover depois: bash desinstalar-arch.sh (ou apague o arquivo).\n\n"
+
+    # --yes pula APENAS esta confirmação. O resumo acima continua sendo
+    # impresso (e gravado no log) — quem usa --yes abre mão de responder,
+    # não de ver. A revisão do PKGBUILD do AUR continua acontecendo.
+    if $ASSUME_YES; then
+        log_info "--yes informado: confirmação inicial dispensada."
+        log_warn "A revisão dos PKGBUILDs do AUR continua sendo pedida pelo ${AUR_HELPER}."
+        printf "\n"
+        return 0
+    fi
 
     printf "Deseja continuar? [s/N] "
     local resposta
@@ -397,39 +446,91 @@ install_chrome()    { log_info "=== Google Chrome ==="; install_aur "chrome" "$A
 install_pjeoffice() { log_info "=== PJeOffice Pro ==="; install_aur "pjeoffice" "$AUR_PJEOFFICE"; }
 install_websigner() { log_info "=== Web Signer ==="; install_aur "websigner" "$AUR_WEBSIGNER"; }
 
+# Nome do leitor reportado pelo pcscd, SEM reimplementar o parse.
+#
+# Preferência 1: reusar lib/detectar-certificado.sh, onde o parse POSICIONAL
+# já está corrigido e testado. detectar_leitor() é seguro de chamar aqui:
+# ela zera CERT_LEITORES/CERT_NUM_LEITORES na entrada e reescreve CERT_LEITOR,
+# e detectar_certificado() — chamada depois em validate_token() — zera TODAS as
+# CERT_* antes de rodar. Ou seja, chamar duas vezes não deixa resíduo.
+#
+# Preferência 2 (fallback): a lib pode não estar do lado (usuário baixou o .sh
+# solto). Só nesse caso repete-se o awk POSICIONAL — cópia DELIBERADA do bloco
+# de detectar_leitor(); se um dos dois mudar, o outro tem de mudar junto.
+#
+# O corte NUNCA pode contar campos ($1/$2/$3): a coluna 'Features' vem VAZIA na
+# saída real, então $3 passa a ser a 1ª palavra do NOME. Foi assim que o
+# "SafeNet" sumiu de "SafeNet eToken 5100 [Main Interface] 00 00" — e um
+# "Aladdin Token JC" viraria "Token JC 00 00", deixando de casar *aladdin* e
+# levando o instalador a pôr sac-core (moderno) num token antigo.
+obter_nome_leitor() {
+    if $DETECTAR_CERT_OK && declare -F detectar_leitor >/dev/null; then
+        CERT_LEITOR=""
+        detectar_leitor >/dev/null 2>&1 || true
+        printf '%s' "${CERT_LEITOR:-}"
+        return 0
+    fi
+
+    command -v opensc-tool &>/dev/null || return 0
+
+    timeout 20 opensc-tool --list-readers 2>/dev/null | awk '
+        /^[[:space:]]*Nr\./ { col = index($0, "Name"); next }
+        /^[0-9]+[[:space:]]/ {
+            if (col > 0 && length($0) >= col) {
+                nome = substr($0, col)
+            } else {
+                nome = $0
+                sub(/^[0-9]+[[:space:]]+[^[:space:]]+[[:space:]]+/, "", nome)
+            }
+            gsub(/^[[:space:]]+|[[:space:]]+$/, "", nome)
+            if (nome != "") { print nome; exit }
+        }
+    ' || true
+}
+
 # Decide entre sac-core e sac-core-legacy pelo dispositivo REALMENTE conectado.
 # A decisão usa o nome do leitor reportado pelo pcscd (opensc-tool --list-readers),
 # não o lsusb: um eToken 5100 aparece no lsusb como "Aladdin ... Token JC", string
 # legada do vendor ID 0529, que sozinha não distingue a geração do token.
+#
+# POLÍTICA DO CASO DUVIDOSO: só o sac-core CAUSA DANO (remove libeTPkcs11.so e
+# /etc/eToken.conf, de que a linha antiga depende). O legacy, no pior caso, é
+# inútil. Logo, na dúvida NÃO se instala SAC nenhum (AUR_SAC_CORE="") — nenhum
+# caminho ambíguo pode cair em sac-core por omissão.
 escolher_pacote_sac() {
     local leitor="" leitor_lower
 
-    # O modelo do token decide qual pacote instalar, e o padrão (sac-core)
-    # REMOVE libeTPkcs11.so se o token for da linha antiga. Detectar vale muito
-    # mais que perguntar: peça o token na porta antes de recorrer à pergunta.
+    # O modelo do token decide qual pacote instalar. Detectar vale muito mais
+    # que perguntar: peça o token na porta antes de recorrer à pergunta.
     printf "\n${BOLD}Conecte o token USB AGORA${NC} e pressione Enter para eu detectar o modelo.\n"
     printf "(Se o seu certificado for A1 — arquivo .pfx/.p12, sem token — apenas pressione Enter.) "
     local _ign; read -r _ign || _ign=""
     printf "\n"
 
-    if command -v opensc-tool &>/dev/null; then
-        leitor="$(timeout 20 opensc-tool --list-readers 2>/dev/null \
-            | awk '/^[0-9]+[[:space:]]/ { $1=""; $2=""; $3=""; sub(/^[[:space:]]+/,""); print; exit }' \
-            || true)"
-    fi
+    leitor="$(obter_nome_leitor || true)"
 
     if [[ -z "$leitor" ]]; then
         log_warn "Nenhum leitor detectado — não dá para saber o modelo do eToken."
         log_warn "  sac-core cobre eToken 5110/5300 e IDPrime;"
         log_warn "  sac-core-legacy cobre a linha antiga (5100, JC, PRO — ex-Aladdin)."
-        printf "\nInstalar a versão LEGACY (token antigo: 5100/JC/PRO)? [s/N] "
+        log_warn "  Instalar o sac-core num token antigo REMOVE libeTPkcs11.so e"
+        log_warn "  /etc/eToken.conf — por isso não se escolhe às cegas."
+        printf "\nO que fazer?\n"
+        printf "  [1] NÃO instalar SAC agora (recomendado: conecte o token e rode de novo)\n"
+        printf "  [2] Instalar a versão LEGACY (token antigo: 5100/JC/PRO)\n"
+        printf "  [3] Instalar a versão MODERNA (5110/5300/IDPrime)\n"
+        printf "Opção [1]: "
         local r; read -r r || r=""
-        if [[ "${r,,}" == "s" ]]; then
-            AUR_SAC_CORE="$AUR_SAC_CORE_LEGACY"
+        case "$r" in
+            2) AUR_SAC_CORE="$AUR_SAC_CORE_LEGACY" ;;
+            3) AUR_SAC_CORE="$AUR_SAC_CORE_MODERNO" ;;
+            *) AUR_SAC_CORE="" ;;
+        esac
+        if [[ -z "$AUR_SAC_CORE" ]]; then
+            log_info "Nenhum SAC será instalado nesta execução."
         else
-            AUR_SAC_CORE="$AUR_SAC_CORE_MODERNO"
+            log_info "Pacote escolhido: ${AUR_SAC_CORE}"
         fi
-        log_info "Pacote escolhido: ${AUR_SAC_CORE}"
         return 0
     fi
 
@@ -441,7 +542,7 @@ escolher_pacote_sac() {
             AUR_SAC_CORE="$AUR_SAC_CORE_MODERNO"
             log_ok "Modelo da linha atual — usando ${AUR_SAC_CORE}."
             ;;
-        *"etoken 5100"*|*"etoken jc"*|*"etoken pro"*|*aladdin*)
+        *"etoken 5100"*|*"etoken jc"*|*"etoken pro"*|*"token jc"*|*"token pro"*|*aladdin*)
             AUR_SAC_CORE="$AUR_SAC_CORE_LEGACY"
             log_ok "Modelo da linha antiga — usando ${AUR_SAC_CORE}."
             log_info "  (o sac-core comum não cobre este token e removeria libeTPkcs11.so)"
@@ -450,18 +551,29 @@ escolher_pacote_sac() {
             # Família reconhecida, geração indefinida: quem decide é o usuário.
             log_warn "eToken detectado, mas o modelo exato não ficou claro."
             printf "\nModelo detectado: %s\n" "$leitor"
-            printf "É um token ANTIGO (5100 / JC / PRO, ex-Aladdin)? [s/N] "
+            printf "É um token ANTIGO (5100 / JC / PRO, ex-Aladdin)? [S/n/pular] "
             local r; read -r r || r=""
-            if [[ "${r,,}" == "s" ]]; then
-                AUR_SAC_CORE="$AUR_SAC_CORE_LEGACY"
+            case "${r,,}" in
+                n|nao|não) AUR_SAC_CORE="$AUR_SAC_CORE_MODERNO" ;;
+                p|pular)   AUR_SAC_CORE="" ;;
+                *)         AUR_SAC_CORE="$AUR_SAC_CORE_LEGACY" ;;
+            esac
+            if [[ -z "$AUR_SAC_CORE" ]]; then
+                log_info "Nenhum SAC será instalado nesta execução."
             else
-                AUR_SAC_CORE="$AUR_SAC_CORE_MODERNO"
+                log_info "Pacote escolhido: ${AUR_SAC_CORE}"
             fi
-            log_info "Pacote escolhido: ${AUR_SAC_CORE}"
             ;;
         *)
-            AUR_SAC_CORE="$AUR_SAC_CORE_MODERNO"
-            log_info "Dispositivo não é da família eToken — mantendo ${AUR_SAC_CORE}."
+            # Dispositivo fora da família eToken/SafeNet: pode ser leitora de
+            # cartão de outro fabricante, ou nome que o parse não cobriu. Não é
+            # motivo para instalar o pacote que causa dano.
+            AUR_SAC_CORE=""
+            log_warn "Dispositivo não reconhecido como eToken/SafeNet: ${leitor}"
+            log_warn "  Nenhum SAC será instalado (o sac-core pode quebrar tokens antigos)."
+            log_warn "  Se este é mesmo um token SafeNet, rode de novo com o token conectado"
+            log_warn "  ou instale o pacote correto à mão:"
+            log_warn "    ${AUR_SAC_CORE_MODERNO} (5110/5300/IDPrime) ou ${AUR_SAC_CORE_LEGACY} (5100/JC/PRO)."
             ;;
     esac
     return 0
@@ -470,6 +582,19 @@ escolher_pacote_sac() {
 install_sac() {
     log_info "=== SafeNet SAC (eToken) ==="
     escolher_pacote_sac
+
+    # AUR_SAC_CORE vazio = caso ambíguo. Não se instala nada: o sac-core errado
+    # DESTRÓI a configuração de um token da linha antiga, e ficar sem middleware
+    # é reversível (basta rodar de novo com o token conectado). A sac-gui sozinha
+    # não serve para nada, então também é pulada.
+    if [[ -z "$AUR_SAC_CORE" ]]; then
+        INSTALL_STATUS["sac"]="skipped"
+        INSTALL_STATUS["sac_gui"]="skipped"
+        log_warn "SAC não instalado — modelo do token indeterminado."
+        log_warn "  Ação: conecte o token USB e rode este script de novo."
+        return 0
+    fi
+
     install_aur "sac" "$AUR_SAC_CORE"
     # A GUI é opcional: serve para trocar o PIN e ver o certificado. A leitura
     # do token funciona só com o sac-core.
@@ -583,7 +708,7 @@ configure_pkcs11() {
     done
 
     # Fallback: o PKGBUILD pode ter mudado o caminho entre versões
-    if [[ -z "$pkcs11_lib" ]] && pacman -Q "$AUR_SAC_CORE" &>/dev/null; then
+    if [[ -z "$pkcs11_lib" && -n "$AUR_SAC_CORE" ]] && pacman -Q "$AUR_SAC_CORE" &>/dev/null; then
         # '|| true' dentro do $( ): sem match o grep sai 1, o 'pipefail'
         # propaga e a atribuição falharia sob 'set -e', matando o script
         # justamente no caminho "não encontrado" que o if abaixo trata.
@@ -958,8 +1083,68 @@ stop_sudo_keepalive() {
     return 0
 }
 
+mostrar_ajuda() {
+    cat <<AJUDA
+PJe no Linux — instalador para Arch Linux e derivados (versão ${PJE_LINUX_VERSION})
+
+USO
+    bash instalar-arch.sh [opções]
+
+O QUE ELE FAZ
+    Deixa o processo eletrônico (PJe, e-SAJ, Projudi) funcionando no Arch:
+    instala o middleware do token, o PJeOffice Pro, o Web Signer e o Chrome,
+    e configura o Native Messaging Host e a regra polkit do leitor de cartão.
+
+O QUE ELE INSTALA
+    Repositório oficial (pacman)
+        pcsclite, ccid          daemon e driver do leitor de smartcard
+        opensc, p11-kit         camada PKCS#11
+    AUR (empacotado pela comunidade; você revisa cada PKGBUILD)
+        ${AUR_CHROME}
+        sac-core ou sac-core-legacy, ${AUR_SAC_GUI}   [PROPRIETÁRIO] SafeNet/Thales
+        ${AUR_PJEOFFICE}                              PJeOffice Pro (CNJ)
+        ${AUR_WEBSIGNER}                              [PROPRIETÁRIO] Softplan
+        ${AUR_SHODO}                                  opcional (Justiça do Trabalho)
+    Também cria /etc/polkit-1/rules.d/50-pcscd-pje.rules (regra permanente).
+
+OPÇÕES
+    -y, --yes     Pula a confirmação inicial deste script.
+                  NÃO pula a revisão dos PKGBUILDs do AUR — essa é do helper
+                  (yay/paru) e continua sendo mostrada. Ainda exige terminal.
+    -h, --help    Mostra esta ajuda e sai, sem instalar nada.
+
+DESINSTALAR
+    bash desinstalar-arch.sh
+
+PIN DO CERTIFICADO
+    Nenhum script deste repositório pede, lê, grava ou registra o seu PIN.
+
+LOG
+    ~/pje-install-arch-AAAAMMDD-HHMMSS.log (permissão 600; inclui a versão
+    do instalador que rodou).
+
+Mudanças entre versões: CHANGELOG.md · Guia completo: docs/arch/README.md
+AJUDA
+}
+
+parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -h|--help)  mostrar_ajuda; exit 0 ;;
+            -y|--yes)   ASSUME_YES=true; shift ;;
+            *)
+                log_error "Opção desconhecida: $1"
+                log_error "  Ação: bash instalar-arch.sh --help"
+                exit 1
+                ;;
+        esac
+    done
+}
+
 main() {
+    parse_args "$@"
     trap stop_sudo_keepalive EXIT
+    log_info "pje-no-linux versão ${PJE_LINUX_VERSION} — instalar-arch.sh"
     check_environment
     check_dependencies
     show_summary_and_confirm

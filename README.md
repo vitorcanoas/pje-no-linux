@@ -6,16 +6,20 @@
 
 ## Qual script eu rodo?
 
-Este repositório cobre **duas famílias de distribuição**, cada uma com seu instalador:
+Este repositório cobre duas "famílias" do Linux (cada uma tem seu jeito de instalar programas) — identifique a sua na tabela:
 
-| Sua distro | Rode |
-|---|---|
-| Ubuntu, Zorin OS, Linux Mint, Debian | `bash instalar.sh` |
-| Arch Linux, **Omarchy**, EndeavourOS, Manjaro, CachyOS | `bash instalar-arch.sh` |
+| Sua distro | Rode | Guia completo |
+|---|---|---|
+| Ubuntu, Zorin OS, Linux Mint, Debian | `bash instalar.sh` | [docs/ubuntu/](docs/ubuntu/README.md) |
+| Arch Linux, **Omarchy**, EndeavourOS, Manjaro, CachyOS | `bash instalar-arch.sh` | [docs/arch/](docs/arch/README.md) |
 
-Se não sabe qual é a sua, rode `cat /etc/os-release` no Terminal — o campo `ID` ou `ID_LIKE` mostra a família.
+Se não sabe qual é a sua, rode `cat /etc/os-release` no Terminal — o campo `ID` ou `ID_LIKE` mostra a família. **Rodou o errado? O script avisa e diz qual é o certo — não quebra nada.**
 
-O restante desta seção e o passo a passo abaixo são para **Ubuntu/Zorin/Mint/Debian**. Para Arch/Omarchy, pule direto para a seção [Arch Linux / Omarchy](#arch-linux--omarchy).
+Cada guia acima é o passo a passo completo daquele caminho, com uma seção **Validação** de comandos que você mesmo roda para conferir que deu certo. O restante deste README é a versão resumida: o passo a passo abaixo é para **Ubuntu/Zorin/Mint/Debian**; para Arch/Omarchy, pule direto para a seção [Arch Linux / Omarchy](#arch-linux--omarchy).
+
+**Já instalou e algo não funciona?** Vá direto para o **[TESTE-RAPIDO.md](TESTE-RAPIDO.md)** — diagnóstico em cascata, do leitor até o site do tribunal.
+
+Mudanças entre versões (inclusive troca de versão ou hash dos componentes proprietários) ficam em **[CHANGELOG.md](CHANGELOG.md)**.
 
 ---
 
@@ -59,6 +63,22 @@ Feito por um advogado, para advogados — inclusive para quem nunca tocou em Lin
 | **Microsoft 365** | Word, Excel, PowerPoint e Outlook funcionando no Linux |
 
 E ainda configura o atalho **Super+Shift+S** para captura de tela — igual ao Win+Shift+S que você usava no Windows.
+
+> ⚠️ **Depois do script rodar, falta um passo manual único:** instalar a extensão
+> Web Signer na loja do Chrome ([Passo 6](#passo-6--configurar-o-web-signer-uma-vez-só)
+> abaixo). O script **não** faz isso sozinho — sem essa extensão, o e-SAJ e o PJe
+> não enxergam o seu certificado.
+
+### O que o instalador vai te perguntar
+
+Ele **para e espera resposta** em alguns pontos. Nenhuma resposta é definitiva —
+dá para rodar o script de novo depois. Prepare estas:
+
+| Pergunta | O que responder |
+|---|---|
+| *"Deseja continuar?"* (resumo do que será instalado) | `s` para seguir. |
+| *"Conecte o token USB AGORA e pressione Enter"* | Plugue o token e dê Enter — é assim que o script descobre o modelo e escolhe o driver certo. **Se o seu certificado é A1** (arquivo `.pfx`/`.p12`, sem token), apenas pressione Enter. |
+| *"Iniciar o PJeOffice Pro automaticamente ao ligar o computador?"* | `s` se você usa PJe todo dia (evita esquecer de abrir antes de logar); `n` ou Enter se prefere abrir na mão. |
 
 ---
 
@@ -149,7 +169,8 @@ Depois de instalar, abra o **Chrome** e faça essa configuração **uma única v
 
 **Quer conferir sem abrir um processo de verdade?** O
 **[TESTE-RAPIDO.md](TESTE-RAPIDO.md)** traz uma checagem de 4 comandos que diz,
-em um minuto, se o leitor, o token, o middleware e o PJeOffice estão de pé — e o
+em um minuto, se o leitor, o token, o *middleware* (o programa que faz a ponte
+entre o token e o computador) e o PJeOffice estão de pé — e o
 que fazer quando cada um falha.
 
 ---
@@ -188,7 +209,7 @@ Consulte o [DICAS.md](DICAS.md) para aprender:
 
 ## Arch Linux / Omarchy
 
-Se você usa **Arch Linux, Omarchy, EndeavourOS, Manjaro ou CachyOS**, o instalador é outro: `instalar-arch.sh`. Ele usa o **AUR** (Arch User Repository) em vez de baixar `.deb`/zip manualmente.
+Se você usa **Arch Linux, Omarchy, EndeavourOS, Manjaro ou CachyOS**, o instalador é outro: `instalar-arch.sh`. Ele usa o **AUR** (Arch User Repository) em vez de baixar `.deb`/zip manualmente — o AUR é *um repositório de programas mantido pela comunidade, fora do catálogo oficial* da distribuição.
 
 ### Pré-requisitos
 
@@ -210,7 +231,7 @@ cd /tmp/yay && makepkg -si
 git clone https://github.com/vitorcanoas/pje-no-linux.git && cd pje-no-linux && bash instalar-arch.sh
 ```
 
-O script detecta o helper AUR (`yay` ou `paru`), mostra um resumo do que vai instalar e pede confirmação antes de compilar qualquer coisa. Durante a instalação, o helper AUR exibe o **PKGBUILD** de cada pacote proprietário antes de compilar — vale a pena ler.
+O script detecta o helper AUR (`yay` ou `paru`), mostra um resumo do que vai instalar e pede confirmação antes de compilar qualquer coisa. Durante a instalação, o helper AUR exibe o **PKGBUILD** de cada pacote proprietário antes de compilar — o PKGBUILD é *a receita, em texto, que mostra o que será instalado*. Vale a pena ler.
 
 ### Desinstalar
 
@@ -218,7 +239,7 @@ O script detecta o helper AUR (`yay` ou `paru`), mostra um resumo do que vai ins
 bash desinstalar-arch.sh
 ```
 
-Remove os pacotes do AUR, configurações, atalhos e Native Messaging Hosts. Pergunta separadamente antes de remover pacotes de infraestrutura genérica (`pcsclite`, `ccid`, `opensc`, `p11-kit`) e dados pessoais em `~/.pjeoffice-pro/`, já que outros programas na máquina podem depender deles.
+Remove os pacotes do AUR, configurações, atalhos e Native Messaging Hosts (*o componente que conecta a extensão do Chrome ao assinador instalado no computador*). Pergunta separadamente antes de remover pacotes de infraestrutura genérica (`pcsclite`, `ccid`, `opensc`, `p11-kit`) e dados pessoais em `~/.pjeoffice-pro/`, já que outros programas na máquina podem depender deles.
 
 ### Tabela de equivalência Debian ↔ Arch
 
@@ -231,7 +252,29 @@ Remove os pacotes do AUR, configurações, atalhos e Native Messaging Hosts. Per
 | Base PKCS#11 | libs via apt | `pcsclite`, `ccid`, `opensc`, `p11-kit` (repositório oficial) |
 | Shodo (Justiça do Trabalho) | não coberto | `shodo` (AUR, opcional) |
 
-Dados medidos em 09/09/2026 via API do AUR.
+Dados medidos em 09/09/2026 via API do AUR. **PKCS#11** é *o padrão que o token
+usa para conversar com os programas* — os quatro pacotes dessa linha são a base
+comum de que todos os assinadores dependem.
+
+> **Prepare esta resposta antes de rodar o script:** ele pergunta
+> *"Instalar também o Shodo (assinador da Justiça do Trabalho, para TRT)?"*.
+> **Se você atua na Justiça do Trabalho (TRT)**, responda **`s`**. Se só atua em
+> TJ/TRF, responda **`n`** ou apenas Enter.
+>
+> As outras perguntas do `instalar-arch.sh` são as mesmas da lista
+> [O que o instalador vai te perguntar](#o-que-o-instalador-vai-te-perguntar):
+> confirmação do resumo, conectar o token para detecção do modelo, e autostart
+> do PJeOffice. Se o modelo do token não for identificado com certeza, o script
+> ainda oferece **[1] não instalar SAC agora / [2] versão LEGACY (token antigo
+> 5100, JC, PRO) / [3] versão MODERNA (5110, 5300, IDPrime)** — na dúvida
+> escolha **[1]**, conecte o token e rode de novo; instalar o pacote errado num
+> token antigo remove o driver de que ele depende.
+>
+> O **desinstalador** (`desinstalar-arch.sh`) também pergunta: além da
+> confirmação geral, ele pergunta separadamente se remove os pacotes de
+> infraestrutura (`pcsclite`, `ccid`, `opensc`, `p11-kit`) e se apaga
+> `~/.pjeoffice-pro/`. Em ambos, **`n` é a resposta segura** — outros programas
+> podem depender deles, e a segunda pasta contém dados seus.
 
 No Arch não existe download manual com conferência de SHA256 fixo como no `instalar.sh`: o AUR já empacota cada componente, e a conferência de integridade passa a ser a **revisão do PKGBUILD** que o helper (`yay`/`paru`) mostra antes de compilar.
 
@@ -242,6 +285,42 @@ O `instalar-arch.sh` **nunca pede nem grava o PIN** do seu certificado A3 — ne
 O motivo é concreto: no padrão PKCS#11 (o protocolo que o token usa), *autenticar* e *assinar* rodam na **mesma sessão**, destravada pelo **mesmo PIN** — a diferença entre as duas operações é só uma flag de uso da chave. Ou seja: quem tem o seu PIN e o token plugado consegue assinar uma petição em seu nome, com fé pública. Por isso o PIN não pode circular fora da hora do uso.
 
 A validação de token que o script faz (`pkcs11-tool --list-slots` e `pkcs11-tool --list-objects --type cert`) lê **apenas objetos públicos** do token — não pede PIN e não desbloqueia a chave privada. O PIN só deve ser digitado pelo titular, na hora, na janela do próprio assinador (PJeOffice, Web Signer etc).
+
+### Tenho VÁRIOS certificados no token. Isso é normal?
+
+**É normal, sim.** Cada vez que você **renova** o certificado, a Autoridade
+Certificadora grava um **novo** no token — e o **antigo continua lá**. Um
+advogado que já renovou duas vezes costuma ter três certificados no mesmo
+token, todos com o seu nome.
+
+Só o **válido** funciona. Os vencidos não somem sozinhos e não atrapalham,
+mas geram duas confusões clássicas:
+
+1. **No navegador**, na hora de escolher o certificado, aparecem vários com o
+   mesmo nome. Se você escolher um vencido, o PJe/e-SAJ recusa o login — em
+   geral **sem dizer o motivo**.
+2. **Ao conferir pelo terminal**, quem olha só o primeiro da lista conclui que
+   o certificado está vencido e vai renovar sem precisar. A ordem da listagem
+   **não** é cronológica.
+
+Para ver todos, com a validade real de cada um:
+
+```bash
+bash lib/detectar-certificado.sh
+```
+
+A saída marca `✔ VÁLIDO` no que está em vigor e `✘ vencido` nos demais — e
+ignora os certificados da cadeia ICP-Brasil (Raiz, ITI, AC), que ficam no
+token mas **não** são o seu certificado de assinatura. O comando **não pede
+PIN**: lê apenas objetos públicos.
+
+> As datas que aparecem no *nome* do certificado são só texto gravado pela AC.
+> O script não confia nelas: lê os campos `notBefore`/`notAfter` de dentro do
+> certificado, que é a validade que o PJe realmente verifica.
+
+Se **nenhum** aparecer como válido, aí sim o certificado expirou de verdade:
+é preciso **renovar na sua Autoridade Certificadora**. Nenhuma configuração
+deste repositório resolve isso.
 
 ### Seu certificado é A1 ou A3? (a diferença muda tudo)
 

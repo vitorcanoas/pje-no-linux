@@ -1,0 +1,372 @@
+# PJe no Ubuntu, Zorin OS, Linux Mint e Debian
+
+> Guia completo do caminho **Ubuntu/Debian**, do zero, com imagens. Se você usa
+> Arch Linux, Omarchy, EndeavourOS, Manjaro ou CachyOS, o seu guia é
+> [docs/arch/README.md](../arch/README.md).
+> Voltar para a porta de entrada: [README.md](../../README.md)
+
+Nunca tocou em Linux na vida? Este guia começa em "como abrir o Terminal".
+
+---
+
+## Requisitos
+
+- Ubuntu 22.04 / 24.04, Zorin OS 17/18, Linux Mint 21–22 ou Debian 12+
+- Arquitetura `amd64` (64 bits)
+- Bash 5.0+, `sudo` disponível, conexão com a internet
+
+Não sabe se está na família certa? Abra o Terminal e rode `cat /etc/os-release`
+— se o campo `ID` ou `ID_LIKE` mencionar `ubuntu` ou `debian`, é aqui. Se você
+rodar o script errado, ele avisa e diz qual é o certo; não quebra nada.
+
+---
+
+## Instalação — copie, cole e pressione Enter
+
+```bash
+git clone https://github.com/vitorcanoas/pje-no-linux.git && cd pje-no-linux && bash instalar.sh
+```
+
+> Abra o Terminal (`Ctrl + Alt + T`), cole o comando acima com
+> `Ctrl + Shift + V` e pressione Enter.
+> Não sabe o que é Terminal? O passo a passo com imagens está logo abaixo. 👇
+
+Para ver o que o script faz **sem instalar nada**:
+
+```bash
+bash instalar.sh --help
+```
+
+### Opções
+
+| Opção | O que faz |
+|---|---|
+| `-h`, `--help` | Mostra a ajuda e sai, sem instalar nada e sem criar log. |
+| `-y`, `--yes` | Pula **apenas** a confirmação inicial. O resumo do que será instalado continua sendo impresso e gravado no log. |
+
+O `--yes` existe para quem administra várias máquinas de um escritório. Se é a
+sua primeira instalação, não use — leia o resumo e confirme.
+
+---
+
+## O que este script instala para você
+
+| O que | Para que serve |
+|---|---|
+| **Google Chrome** | Navegador oficial do PJe |
+| **SafeNet SAC** | Para o computador reconhecer seu token (aquele pendrive do certificado) |
+| **SafeSign IC** | Para assinar documentos com seu certificado A3 |
+| **PJeOffice Pro** | O assinador digital oficial dos tribunais |
+| **Web Signer** | Extensão para assinar no navegador (e-SAJ, TJSP e outros) |
+| **Antigravity IDE** | Ambiente de trabalho recomendado |
+| **Microsoft 365** | Word, Excel, PowerPoint e Outlook funcionando no Linux |
+
+E ainda configura o atalho **Super+Shift+S** para captura de tela — igual ao
+Win+Shift+S que você usava no Windows.
+
+**Cada download é conferido por SHA256** antes de ser instalado, contra um hash
+commitado neste repositório. Se o hash não bater, a instalação aborta. Esta é a
+diferença material em relação ao caminho Arch, onde a integridade vem da
+revisão do PKGBUILD do AUR.
+
+---
+
+## Como instalar — do zero, passo a passo
+
+### Passo 1 — Abrir o Terminal
+
+**O Terminal é o "Prompt de Comando" do Linux.** É uma janela onde você digita
+instruções para o computador — parece assustador, mas você vai usar só um
+comando.
+
+Para abrir:
+- Pressione **Ctrl + Alt + T** ao mesmo tempo
+- Ou clique em **Atividades** (canto superior esquerdo) → digite **"Terminal"**
+  → clique no ícone
+
+![Como encontrar o Terminal no menu de aplicativos](../../assets/screenshots/00-abrir-terminal.png)
+
+Com o Terminal aberto, você verá uma janela preta. É aqui que você vai digitar
+o comando:
+
+![Terminal com o comando de instalação](../../assets/screenshots/01-terminal.png)
+
+---
+
+### Passo 2 — Digitar o comando
+
+Com o Terminal aberto, **clique uma vez dentro da janela preta** e digite
+exatamente isso:
+
+```
+bash instalar.sh
+```
+
+Depois pressione **Enter**.
+
+> **Dica:** Você pode copiar o texto acima e colar no Terminal com
+> **Ctrl + Shift + V** (no Linux é Shift+V, não só V).
+
+---
+
+### Passo 3 — Digitar sua senha
+
+O instalador vai pedir sua senha de usuário (a mesma que você usa para entrar
+no computador).
+
+**⚠️ Importante:** Quando você digitar a senha, **as letras NÃO aparecem na
+tela** — nem asteriscos, nada. Parece que não está funcionando, mas está. É uma
+proteção normal do Linux. Digite a senha e pressione Enter.
+
+> Essa é a senha do **seu usuário do computador** — não é o PIN do certificado.
+> Nenhum script deste repositório pede, lê ou grava o PIN do certificado.
+
+![Tela de senha — o cursor fica parado, mas a senha está sendo digitada](../../assets/screenshots/02b-senha-terminal.png)
+
+---
+
+### Passo 4 — Confirmar a instalação
+
+Vai aparecer um resumo mostrando o que será instalado. Leia e, se estiver de
+acordo, **pressione a letra `s`** e depois **Enter** para confirmar.
+
+---
+
+### Passo 5 — Aguardar
+
+O instalador vai baixar e instalar tudo sozinho. Dependendo da sua internet,
+leva de 5 a 15 minutos. Você vai ver textos passando na tela — isso é normal,
+pode deixar rodar.
+
+No final, aparece um relatório como este — tudo com ✓ verde significa que deu
+certo:
+
+![Relatório final da instalação com todos os componentes instalados](../../assets/screenshots/05-relatorio-final.png)
+
+---
+
+### Passo 6 — Configurar o Web Signer (uma vez só)
+
+Depois de instalar, abra o **Chrome** e faça essa configuração **uma única
+vez**:
+
+1. Procure o ícone do **Web Signer** na barra do Chrome (um escudo 🛡️ no canto
+   superior direito) e clique nele
+
+![Onde fica o ícone do Web Signer no Chrome](../../assets/screenshots/06-websigner-icone.png)
+
+2. Clique em **Configurações** (ícone de engrenagem)
+3. Clique na aba **"Cripto Dispositivos"**
+4. No campo **"Nome do arquivo SO"**, digite: `libeToken.so`
+5. Clique no botão **+**
+
+![Configuração do Web Signer — aba Cripto Dispositivos](../../assets/screenshots/03-websigner.png)
+
+---
+
+## Passo manual: a extensão Web Signer no Chrome
+
+O Chrome exige que a instalação de extensão parta do usuário — o script não
+consegue fazer isso por você.
+
+1. Abra o Chrome e acesse:
+   <https://chromewebstore.google.com/detail/web-signer/bbafmabaelnnkondpfpjmdklbmfnbmol>
+2. Clique em **Usar no Chrome** e confirme.
+
+> **Atenção — errata.** Versões anteriores deste repositório indicavam o ID
+> `dcngeagmmhegagicpcmpinaoklddcgon`. Esse ID **não é o Web Signer**: é a
+> extensão *Web PKI*, da Lacuna Software — outro fabricante, outro produto.
+> Quem instalou aquela ficou com o e-SAJ sem assinar.
+>
+> A prova do ID correto vem do próprio pacote oficial da Softplan: o
+> `manifest.json` do Native Messaging Host declara
+> `"allowed_origins": ["chrome-extension://bbafmabaelnnkondpfpjmdklbmfnbmol/"]`
+> — esse é o único ID que o componente nativo aceita.
+
+---
+
+## Validação após a instalação
+
+Rode estes comandos no Terminal. Você mesmo confere que deu certo, sem precisar
+abrir um processo real e **sem digitar o PIN em lugar nenhum**.
+
+**1. Os programas estão instalados?**
+
+```bash
+command -v google-chrome-stable
+command -v pjeoffice-pro
+command -v pkcs11-tool
+```
+
+Cada linha deve imprimir um caminho. Linha vazia = aquele componente não entrou.
+
+**2. Os pacotes estão registrados no sistema?**
+
+```bash
+dpkg -l google-chrome-stable safenetauthenticationclient safesign pjeoffice-pro webpki-chrome 2>/dev/null | grep '^ii'
+```
+
+**3. O serviço do leitor está de pé?**
+
+```bash
+systemctl is-active pcscd.socket
+```
+
+Esperado: `active`. Se vier `inactive`, rode
+`sudo systemctl enable --now pcscd.socket`.
+
+**4. O sistema enxerga o seu token?**
+
+Com o token plugado:
+
+```bash
+pcsc_scan -c 2>/dev/null | head -20
+pkcs11-tool --list-slots
+```
+
+O token deve aparecer como um slot com token presente. **Este comando não pede
+PIN** e não desbloqueia a chave privada.
+
+**5. O certificado está legível?**
+
+```bash
+pkcs11-tool --list-objects --type cert
+```
+
+Deve listar o seu certificado (nome, label). Isso lê **apenas objetos
+públicos** do token — de novo, sem PIN.
+
+**6. O Native Messaging Host do Web Signer está no lugar?**
+
+```bash
+ls -l ~/.config/google-chrome/NativeMessagingHosts/ 2>/dev/null
+```
+
+Roteiro mais detalhado, com o que fazer quando algo falha:
+[TESTE-RAPIDO.md](../../TESTE-RAPIDO.md).
+
+Se quiser só o diagnóstico do token, sem instalar nada:
+
+```bash
+bash lib/detectar-certificado.sh
+```
+
+---
+
+## Quando tudo estiver funcionando
+
+**PJeOffice reconhecendo seu token:**
+
+![PJeOffice reconhecendo o token](../../assets/screenshots/02-pjeoffice.png)
+
+**e-SAJ com seu certificado disponível:**
+
+![eSAJ com certificado funcionando](../../assets/screenshots/04-esaj.png)
+
+---
+
+## Seu certificado é A1 ou A3? (a diferença muda tudo)
+
+Antes de brigar com token, leitor e driver, confira **qual dos dois** você tem —
+metade dos problemas relatados é gente com A1 tentando resolver problema de A3.
+
+| | **A1** | **A3** |
+|---|---|---|
+| O que é | Um **arquivo** (`.pfx` ou `.p12`) | Um **token USB** ou cartão + leitora |
+| Onde fica | No disco do computador | Dentro do chip, e não sai de lá |
+| Validade típica | 1 ano | 3 anos |
+| Precisa de driver? | **Não** | **Sim** (middleware PKCS#11) |
+
+**Se o seu certificado é A1**, não há token para conectar: não se preocupe com
+SafeNet SAC, `pcscd` ou leitora. O A1 é importado direto no navegador e no
+PJeOffice.
+
+---
+
+## Segurança do certificado — o PIN nunca circula
+
+O `instalar.sh` **nunca pede nem grava o PIN** do seu certificado A3 — nem em
+script, nem em arquivo de configuração, nem em variável de ambiente, nem no log.
+
+O motivo é concreto: no padrão PKCS#11 (o protocolo que o token usa),
+*autenticar* e *assinar* rodam na **mesma sessão**, destravada pelo **mesmo
+PIN** — a diferença entre as duas operações é só uma flag de uso da chave. Ou
+seja: quem tem o seu PIN e o token plugado consegue assinar uma petição em seu
+nome, com fé pública. Por isso o PIN não pode circular fora da hora do uso.
+
+O PIN só deve ser digitado pelo titular, na hora, na janela do próprio
+assinador (PJeOffice, Web Signer etc).
+
+---
+
+## Componentes e versões atuais
+
+| Componente | Versão | Distribuição |
+|---|---|---|
+| SafeNet SAC | 10.8.1050 | Ubuntu 22.04 |
+| SafeSign IC | 4.6.0.0 | Ubuntu 22.04 |
+| PJeOffice Pro | v2.5.16u | Linux x64 |
+| Web Signer | 2.12.1 | Chrome (64-bit .deb) |
+
+Mudanças de versão e de hash ficam registradas em
+[CHANGELOG.md](../../CHANGELOG.md) — é o que permite provar, meses depois, qual
+binário foi instalado. Os hashes ficam no bloco de configuração no topo do
+`instalar.sh`; o mantenedor os recalcula com `./atualizar-hashes.sh`.
+
+---
+
+## Desinstalar
+
+```bash
+bash desinstalar.sh
+```
+
+Remove todos os pacotes, arquivos de configuração, atalhos e reverte o atalho
+de captura de tela. É interativo e confirma antes de remover qualquer coisa.
+
+Opções: `--help` mostra o que será removido sem remover nada; `--yes` pula a
+confirmação inicial.
+
+---
+
+## Algo deu errado?
+
+Não entre em pânico. O instalador grava um log completo com tudo que aconteceu
+em:
+
+```
+~/pje-install-DATA-HORA.log
+```
+
+O log começa registrando **qual versão do instalador rodou**. Envie esse
+arquivo para o suporte e ele terá tudo que precisa para te ajudar.
+
+> ⚠️ **Antes de anexar o log em um lugar público** (issue no GitHub, fórum,
+> grupo de WhatsApp): ele registra o **ATR do chip** do seu token — um
+> identificador fixo do seu dispositivo — além do nome de usuário e caminhos da
+> sua máquina. O log **nunca contém o PIN nem a chave privada**, mas o ATR
+> permite correlacionar registros. Revise o arquivo antes de publicá-lo, ou
+> envie-o apenas em canal privado de suporte.
+
+Outros recursos:
+
+- [TESTE-RAPIDO.md](../../TESTE-RAPIDO.md) — checagem rápida de 4 comandos.
+- [DICAS.md](../../DICAS.md) — dia a dia de quem migrou do Windows.
+- Issues: <https://github.com/vitorcanoas/pje-no-linux/issues>
+
+---
+
+## Dicas para o dia a dia no Linux
+
+Consulte o [DICAS.md](../../DICAS.md) para aprender:
+
+- **Super+Shift+S** — captura de área da tela (igual ao Win+Shift+S)
+- Atalhos do teclado equivalentes ao Windows
+- Histórico da área de transferência (igual ao Win+V)
+- Como imprimir para PDF
+- Como recuperar arquivos deletados
+- Como usar o token digital
+
+---
+
+*Projeto open source licenciado sob [GPL-3.0](../../LICENSE).*

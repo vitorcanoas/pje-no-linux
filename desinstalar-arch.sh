@@ -10,9 +10,71 @@ readonly GREEN='\033[0;32m'
 readonly YELLOW='\033[1;33m'
 readonly NC='\033[0m'
 
-log_ok()   { printf "${GREEN}[OK]${NC} %s\n" "$*"; }
-log_warn() { printf "${YELLOW}[AVISO]${NC} %s\n" "$*"; }
-log_info() { printf "[INFO] %s\n" "$*"; }
+readonly RED='\033[0;31m'
+
+log_ok()    { printf "${GREEN}[OK]${NC} %s\n" "$*"; }
+log_warn()  { printf "${YELLOW}[AVISO]${NC} %s\n" "$*"; }
+log_info()  { printf "[INFO] %s\n" "$*"; }
+log_error() { printf "${RED}[ERRO]${NC} %s\n" "$*" >&2; }
+
+SCRIPT_DIR="$(CDPATH="" cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly SCRIPT_DIR
+
+mostrar_ajuda() {
+    cat <<'AJUDA'
+PJe no Linux — desinstalador para Arch Linux e derivados
+
+USO
+    bash desinstalar-arch.sh [opções]
+
+O QUE ELE FAZ
+    Remove os componentes instalados por instalar-arch.sh: Chrome, o
+    middleware do token (sac-core/sac-core-legacy, sac-gui), PJeOffice Pro,
+    Web Signer, Shodo, o Native Messaging Host e a regra polkit do leitor.
+    Pacotes que não estiverem instalados são ignorados sem erro.
+
+    NÃO remove pcsclite/ccid/opensc/p11-kit: são pacotes do repositório
+    oficial que outros programas podem estar usando.
+
+OPÇÕES
+    -y, --yes     Pula a confirmação inicial. Ainda exige terminal.
+    -h, --help    Mostra esta ajuda e sai, sem remover nada.
+
+USA UBUNTU, ZORIN, MINT OU DEBIAN?
+    Rode: bash desinstalar.sh
+
+PIN DO CERTIFICADO
+    Nenhum script deste repositório pede, lê, grava ou registra o seu PIN.
+AJUDA
+}
+
+ASSUME_YES=false
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h|--help) mostrar_ajuda; exit 0 ;;
+        -y|--yes)  ASSUME_YES=true; shift ;;
+        *)
+            log_error "Opção desconhecida: $1"
+            log_error "  Ação: bash desinstalar-arch.sh --help"
+            exit 1
+            ;;
+    esac
+done
+readonly ASSUME_YES
+
+# Guard-rail cruzado: quem rodou o desinstalador errado descobre agora, com o
+# comando certo na tela — e não depois de 'pacman: command not found'.
+DETECTAR_DISTRO_LIB="${SCRIPT_DIR}/lib/detectar-distro.sh"
+if [[ -r "$DETECTAR_DISTRO_LIB" ]]; then
+    # shellcheck source=lib/detectar-distro.sh
+    source "$DETECTAR_DISTRO_LIB"
+    detectar_distro
+    exigir_familia arch "desinstalar.sh"
+elif ! command -v pacman &>/dev/null; then
+    log_error "'pacman' não encontrado — este script é para Arch Linux e derivados."
+    log_error "  Em Ubuntu, Zorin, Mint ou Debian use: bash desinstalar.sh"
+    exit 1
+fi
 
 # Remove pacote pacman (AUR ou oficial) se instalado; avisa mas não aborta
 # se ausente. -Rns: remove dependências órfãs e arquivos de config (.pacsave
@@ -37,11 +99,15 @@ fi
 
 printf "\nPJe no Linux — Desinstalador (Arch Linux / Omarchy)\n"
 printf "Este script removerá todos os componentes instalados pelo instalar-arch.sh.\n\n"
-printf "Deseja continuar? [s/N] "
-read -r resposta || resposta=""
-if [[ "${resposta,,}" != "s" ]]; then
-    log_info "Desinstalação cancelada."
-    exit 0
+if $ASSUME_YES; then
+    log_info "--yes informado: confirmação dispensada."
+else
+    printf "Deseja continuar? [s/N] "
+    read -r resposta || resposta=""
+    if [[ "${resposta,,}" != "s" ]]; then
+        log_info "Desinstalação cancelada."
+        exit 0
+    fi
 fi
 
 printf "\n"
