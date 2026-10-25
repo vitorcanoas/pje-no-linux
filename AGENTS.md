@@ -1,3 +1,5 @@
+> ⛔ **RULE ZERO (owner order, every agent):** never spend Claude/Anthropic tokens on scraping or legwork (crawl, download, parse, bulk reading, running scripts in chunks, data commits). Engine order: agy first, then codex/Luna. Claude only orchestrates, manages, codes, reviews and audits; managers delegate legwork to an agy/Luna fleet. Any exception needs Vitor's explicit OK. Full rule: `~/.claude/CLAUDE.md` and `~/.claude/EFICIENCIA.md` §8.
+
 # Para o Advogado que Também Coda
 
 Então você é advogado, usa Linux **e** quer contribuir com código. Bem-vindo ao clube dos masoquistas bem-sucedidos. 🎉
